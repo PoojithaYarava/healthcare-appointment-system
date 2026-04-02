@@ -1,39 +1,31 @@
-const express = require("express");
-const mongoose=require("mongoose");
-const cors=require("cors");
-require("dotenv").config();
+import express from 'express';
+import cors from 'cors';
+import 'dotenv/config';
+import connectDB from './config/mongodb.js';
+import connectCloudinary from './config/cloudinary.js';
+import adminRouter from './routes/adminRoute.js';
+import appointmentRouter from './routes/appointmentRoutes.js';
 
+// App Config
 const app = express();
+const port = process.env.PORT || 4000;
 
+// Connect to Database and Cloudinary
+connectDB();
+connectCloudinary();
 
-//middleware
-app.use(cors());
+// Middlewares
 app.use(express.json());
+app.use(cors());
 
-//MongoDB Connection
-// mongoose.connect("mongodb://127.0.0.1:27017/mediconnect")
-// .then(()=> console.log("MongoDB connected"))
-// .catch(err => console.log(err));
+//API Endpoints
+app.use('/api/admin', adminRouter);
+app.use('/api/appointment', appointmentRouter);
 
-//routes
-const authRoutes = require("./routes/authRoutes");
-const appointmentRoutes = require("./routes/appointmentRoutes");
-
-
-app.use("/api/auth",authRoutes);
-app.use("/api/appointments",appointmentRoutes);
-
-//DB Connection
-mongoose.connect(process.env.MONGO_URI)
-.then(()=>console.log("DB Connected"))
-.catch(err => console.log(err));
-
-//test route
-app.get("/",(req,res)=>{
-  res.send("API running");
+app.get('/', (req, res) => {
+    res.send("MediConnect API is Working!");
 });
 
-//server
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
-});
+app.listen(port, () => console.log('server started on http://localhost:4000'));
+
+
