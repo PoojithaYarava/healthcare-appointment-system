@@ -1,48 +1,76 @@
-import React from 'react';
-import logo from '../assets/logo.png'; 
-import { NavLink, useNavigate } from 'react-router-dom';
+import React, { useContext, useEffect, useState } from 'react'
+import { AppContext } from '../context/AppContext'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 
-const Navbar = () => {
-  const navigate = useNavigate();
+const Login = () => {
+  const { backendUrl, token, setToken, navigate } = useContext(AppContext)
+  const [state, setState] = useState('Sign Up')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+
+  const onSubmitHandler = async (event) => {
+    event.preventDefault()
+    try {
+      const endpoint = state === 'Sign Up' ? '/api/user/register' : '/api/user/login'
+      const payload = state === 'Sign Up' ? { name, email, password } : { email, password }
+
+      // REAL communication with your Node.js backend
+      const { data } = await axios.post(backendUrl + endpoint, payload)
+
+      if (data.success) {
+        localStorage.setItem('token', data.token) // Save real JWT
+        setToken(data.token)
+        toast.success(`${state} successful!`)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      console.error("Auth Error:", error)
+      toast.error(error.response?.data?.message || "Server connection failed")
+    }
+  }
+
+  useEffect(() => {
+    if (token) navigate('/')
+  }, [token, navigate])
 
   return (
-    <div className='flex items-center justify-between text-sm py-5 mb-8 border-b border-gray-100 shadow-sm px-4 md:px-10 bg-white sticky top-0 z-50'>
-      
-      {/* Brand Logo & Name */}
-      <div onClick={() => navigate('/')} className='flex items-center gap-3 cursor-pointer'>
-        <img className='w-10' src={logo} alt="MediConnect" />
-        <span className='text-2xl font-extrabold text-indigo-900 tracking-tighter'>
-          Medi<span className="text-emerald-500">Connect</span>
-        </span>
-      </div>
+    <form onSubmit={onSubmitHandler} className='min-h-[80vh] flex items-center'>
+      <div className='flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-96 border rounded-xl text-zinc-600 text-sm shadow-lg'>
+        <p className='text-2xl font-semibold'>{state === 'Sign Up' ? "Create Account" : "Login"}</p>
+        
+        {state === 'Sign Up' && (
+          <div className='w-full'>
+            <p>Full Name</p>
+            <input className='border border-zinc-300 rounded w-full p-2 mt-1' type="text" onChange={(e) => setName(e.target.value)} value={name} required />
+          </div>
+        )}
 
-      {/* Navigation Links */}
-      <ul className='hidden md:flex items-center gap-8 font-semibold text-gray-600'>
-        <NavLink to='/' className={({isActive})=> isActive ? "text-indigo-900 border-b-2 border-indigo-900 pb-1" : "hover:text-indigo-900 transition-all"}>
-          <li>HOME</li>
-        </NavLink>
-        <NavLink to='/doctors' className={({isActive})=> isActive ? "text-indigo-900 border-b-2 border-indigo-900 pb-1" : "hover:text-indigo-900 transition-all"}>
-          <li>FIND DOCTORS</li>
-        </NavLink>
-        <NavLink to='/hospitals' className={({isActive})=> isActive ? "text-indigo-900 border-b-2 border-indigo-900 pb-1" : "hover:text-indigo-900 transition-all"}>
-          <li>HOSPITALS</li>
-        </NavLink>
-        <NavLink to='/my-appointments' className={({isActive})=> isActive ? "text-indigo-900 border-b-2 border-indigo-900 pb-1" : "hover:text-indigo-900 transition-all"}>
-          <li>MY BOOKINGS</li>
-        </NavLink>
-      </ul>
+        <div className='w-full'>
+          <p>Email</p>
+          <input className='border border-zinc-300 rounded w-full p-2 mt-1' type="email" onChange={(e) => setEmail(e.target.value)} value={email} required />
+        </div>
 
-      {/* Action Button */}
-      <div className='flex items-center gap-4'>
-        <button 
-          onClick={() => navigate('/login')} 
-          className='bg-indigo-900 text-white px-8 py-3 rounded-xl font-medium hover:bg-indigo-800 hover:shadow-lg transition-all active:scale-95'
-        >
-          Sign In
+        <div className='w-full'>
+          <p>Password</p>
+          <input className='border border-zinc-300 rounded w-full p-2 mt-1' type="password" onChange={(e) => setPassword(e.target.value)} value={password} required />
+        </div>
+
+        <button type='submit' className='bg-[#5f6FFF] text-white w-full py-2 rounded-md text-base mt-2'>
+          {state === 'Sign Up' ? "Create account" : "Login"}
         </button>
-      </div>
-    </div>
-  );
-};
 
-export default Navbar;
+        <p className='mt-2'>
+          {state === 'Sign Up' ? "Already have an account?" : "Create a new account?"} 
+          <span onClick={() => setState(state === 'Sign Up' ? 'Login' : 'Sign Up')} className='text-[#5f6FFF] underline cursor-pointer ml-1'>
+            {state === 'Sign Up' ? "Login here" : "Click here"}
+          </span>
+        </p>
+      </div>
+    </form>
+  )
+}
+
+export default Login

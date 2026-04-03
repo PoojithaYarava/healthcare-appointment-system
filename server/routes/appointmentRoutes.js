@@ -1,14 +1,9 @@
-const express = require("express");
-const router = express.Router();
+import express from 'express';
+import { bookAppointment } from '../controllers/appointmentController.js';
 
-const {
-  bookAppointment,
-  getAppointments,
-  updateStatus
-} = require("../controllers/appointmentController");
+const appointmentRouter = express.Router();
 
-router.post("/", bookAppointment);
-router.get("/", getAppointments);
-router.put("/:id", updateStatus);
+// This defines the endpoint: /api/appointment/book-appointment
+appointmentRouter.post('/book-appointment', bookAppointment);
 
-module.exports = router;
+export default appointmentRouter;

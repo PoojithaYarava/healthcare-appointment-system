@@ -1,39 +1,42 @@
-const express = require("express");
-const mongoose=require("mongoose");
-const cors=require("cors");
-require("dotenv").config();
+import express from 'express';
+import cors from 'cors';
+import 'dotenv/config';
+import connectDB from './config/mongodb.js';
+import connectCloudinary from './config/cloudinary.js';
 
+// Import Routers
+import adminRouter from './routes/adminRoute.js';
+import appointmentRouter from './routes/appointmentRoutes.js';
+import userRouter from './routes/userRoute.js'; // Ensure this file exists!
+
+// App Config
 const app = express();
+const port = process.env.PORT || 4000;
 
+// Connect to Database and Cloudinary
+connectDB();
+connectCloudinary();
 
-//middleware
-app.use(cors());
+// Middlewares
 app.use(express.json());
 
-//MongoDB Connection
-// mongoose.connect("mongodb://127.0.0.1:27017/mediconnect")
-// .then(()=> console.log("MongoDB connected"))
-// .catch(err => console.log(err));
+// FIXED: Explicit CORS for Vite
+app.use(cors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
 
-//routes
-const authRoutes = require("./routes/authRoutes");
-const appointmentRoutes = require("./routes/appointmentRoutes");
+// API Endpoints
+app.use('/api/admin', adminRouter);
+app.use('/api/appointment', appointmentRouter);
+app.use('/api/user', userRouter); // This maps to your login/register logic
 
-
-app.use("/api/auth",authRoutes);
-app.use("/api/appointments",appointmentRoutes);
-
-//DB Connection
-mongoose.connect(process.env.MONGO_URI)
-.then(()=>console.log("DB Connected"))
-.catch(err => console.log(err));
-
-//test route
-app.get("/",(req,res)=>{
-  res.send("API running");
+app.get('/', (req, res) => {
+    res.send("MediConnect API is Working!");
 });
 
-//server
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
-});
+// Use template literals for a clickable link in the terminal
+app.listen(port, () => console.log(`Server started on http://localhost:4000`));
+
+
