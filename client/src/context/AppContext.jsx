@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState, useCallback } from "react";
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -10,8 +10,9 @@ const AppContextProvider = (props) => {
     const [token, setToken] = useState(localStorage.getItem('token') || false);
     const [userData, setUserData] = useState(false);
 
-    // This function fetches the user data
-    const loadUserProfileData = async () => {
+    // 1. We wrap the fetch logic in useCallback. 
+    // This makes the function 'static' unless token or backendUrl changes.
+    const loadUserProfileData = useCallback(async () => {
         try {
             const { data } = await axios.get(`${backendUrl}/api/user/get-profile`, { 
                 headers: { token } 
@@ -23,12 +24,12 @@ const AppContextProvider = (props) => {
                 toast.error(data.message);
             }
         } catch (error) {
-            console.log(error);
+            console.log(error.message);
             toast.error(error.message);
         }
-    };
+    }, [backendUrl, token]);
 
-    // FIX: Renamed from syncUserStatus to match the context
+    // 2. Now the effect is 'safe' because it depends on a stable function.
     useEffect(() => {
         if (token) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -36,7 +37,7 @@ const AppContextProvider = (props) => {
         } else {
             setUserData(false);
         }
-    }, [token]);
+    }, [token, loadUserProfileData]);
 
     const value = {
         backendUrl,
