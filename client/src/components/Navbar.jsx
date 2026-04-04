@@ -7,6 +7,7 @@ const Navbar = () => {
     const navigate = useNavigate();
     const { token, setToken, userData } = useContext(AppContext);
 
+    // Clears local state and storage to successfully log the user out
     const logout = () => {
         setToken(false);
         localStorage.removeItem('token');
@@ -15,38 +16,54 @@ const Navbar = () => {
 
     return (
         <div className='flex items-center justify-between text-sm py-4 mb-5 border-b border-b-gray-400 px-4 sm:px-[10%]'>
-            {/* NEW LOGO DESIGN: Icon + Text */}
+            {/* Logo Section */}
             <div onClick={() => navigate('/')} className='flex items-center gap-2 cursor-pointer'>
-                <img className='w-8' src={assets.logo} alt="Logo Icon" />
+                <img className='w-8' src={assets.logo} alt="Logo" />
                 <p className='text-2xl font-bold text-primary tracking-tight'>
                     Medi<span className='text-secondary'>Connect</span>
                 </p>
             </div>
             
+            {/* Navigation Links with Active Indicators */}
             <ul className='hidden md:flex items-start gap-5 font-medium'>
-                <NavLink to='/'><li className='py-1 uppercase'>Home</li></NavLink>
-                <NavLink to='/doctors'><li className='py-1 uppercase'>Find Doctors</li></NavLink>
-                <NavLink to='/about'><li className='py-1 uppercase'>Hospitals</li></NavLink>
-                <NavLink to='/contact'><li className='py-1 uppercase'>My Bookings</li></NavLink>
+                <NavLink to='/'>
+                    <li className='py-1'>HOME</li>
+                    <hr className='border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden' />
+                </NavLink>
+                <NavLink to='/doctors'>
+                    <li className='py-1'>FIND DOCTORS</li>
+                    <hr className='border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden' />
+                </NavLink>
+                <NavLink to='/about'>
+                    <li className='py-1'>HOSPITALS</li>
+                    <hr className='border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden' />
+                </NavLink>
+                <NavLink to='/contact'>
+                    <li className='py-1'>MY BOOKINGS</li>
+                    <hr className='border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden' />
+                </NavLink>
             </ul>
 
             <div className='flex items-center gap-4'>
+                {/* This check is the 'Gatekeeper'. 
+                    If the backend error (userId undefined) is happening, 
+                    userData will be false, and this menu will hide.
+                */}
                 {token && userData ? (
                     <div className='flex items-center gap-2 cursor-pointer group relative'>
-                        <div className='w-9 h-9 rounded-full overflow-hidden border border-gray-300 bg-gray-100'>
-                            <img 
-                                className='w-full h-full object-cover' 
-                                src={userData.image ? userData.image : assets.profile_pic} 
-                                alt="User Profile" 
-                            />
-                        </div>
+                        <img 
+                            className='w-8 rounded-full' 
+                            src={userData.image ? userData.image : assets.profile_pic} 
+                            alt="Profile" 
+                        />
                         <img className='w-2.5' src={assets.dropdown_icon} alt="" />
 
-                        <div className='absolute top-full right-0 mt-2 text-base font-medium text-gray-600 z-20 hidden group-hover:block'>
-                            <div className='min-w-48 bg-stone-100 rounded-md flex flex-col gap-3 p-4 shadow-lg border border-gray-200'>
-                                <p onClick={() => navigate('/my-profile')} className='hover:text-black hover:bg-stone-200 p-1.5 rounded cursor-pointer'>My Profile</p>
-                                <p onClick={() => navigate('/my-appointments')} className='hover:text-black hover:bg-stone-200 p-1.5 rounded cursor-pointer'>My Appointments</p>
-                                <p onClick={logout} className='hover:text-black hover:bg-stone-200 p-1.5 rounded cursor-pointer'>Logout</p>
+                        {/* Dropdown Menu */}
+                        <div className='absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 hidden group-hover:block'>
+                            <div className='min-w-48 bg-stone-100 rounded flex flex-col gap-4 p-4 shadow-md'>
+                                <p onClick={() => navigate('/my-profile')} className='hover:text-black cursor-pointer'>My Profile</p>
+                                <p onClick={() => navigate('/my-appointments')} className='hover:text-black cursor-pointer'>My Appointments</p>
+                                <p onClick={logout} className='hover:text-black cursor-pointer'>Logout</p>
                             </div>
                         </div>
                     </div>
@@ -54,7 +71,7 @@ const Navbar = () => {
                     <button 
                         onClick={() => navigate('/login')} 
                         className='bg-primary text-white px-8 py-3 rounded-full font-light hidden md:block transition-all hover:scale-105'>
-                        Sign In
+                        Create account
                     </button>
                 )}
             </div>
