@@ -4,9 +4,10 @@ import jwt from 'jsonwebtoken';
 import userModel from '../models/userModel.js';
 import { v2 as cloudinary } from "cloudinary";
 
-// Helper: Create a 7-day token
+// Helper: Create a 7-day token with explicit 'id' key
 const createToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    // Convert to string to ensure consistency in the JWT payload
+    return jwt.sign({ id: String(id) }, process.env.JWT_SECRET, { expiresIn: '7d' });
 }
 
 // API for User Registration
@@ -17,6 +18,12 @@ export const registerUser = async (req, res) => {
         if (!name || !email || !password) {
             return res.json({ success: false, message: "Missing Details" });
         }
+        
+        const exists = await userModel.findOne({ email });
+        if (exists) {
+            return res.json({ success: false, message: "User already exists" });
+        }
+
         if (!validator.isEmail(email)) {
             return res.json({ success: false, message: "Please enter a valid email" });
         }
@@ -55,7 +62,7 @@ export const loginUser = async (req, res) => {
             const token = createToken(user._id);
             res.json({ success: true, token });
         } else {
-            res.json({ success: false, message: "Invalid credentials" });
+            return res.json({ success: false, message: "Invalid credentials" });
         }
     } catch (error) {
         console.error(error);
@@ -66,8 +73,13 @@ export const loginUser = async (req, res) => {
 // API to get User Profile Data
 export const getProfile = async (req, res) => {
     try {
-        const { userId } = req.body; // Attached by authUser middleware
+        const userId = req.userId;
+        
         const userData = await userModel.findById(userId).select('-password');
+        
+        if (!userData) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
 
         res.json({ success: true, userData });
     } catch (error) {
@@ -79,27 +91,35 @@ export const getProfile = async (req, res) => {
 // API to update User Profile
 export const updateProfile = async (req, res) => {
     try {
-        const { userId, name, phone, address, dob, gender } = req.body;
+        const userId = req.userId;
+        const { name, phone, address, dob, gender } = req.body;
         const imageFile = req.file;
 
         if (!name || !phone || !dob || !gender) {
             return res.json({ success: false, message: "Missing Details" });
         }
 
+        // Parse address if it comes as a string from FormData
+        let parsedAddress = address;
+        if (typeof address === 'string') {
+            try {
+                parsedAddress = JSON.parse(address);
+            } catch (e) {
+                console.log("Address parsing handled");
+            }
+        }
+
         await userModel.findByIdAndUpdate(userId, { 
             name, 
             phone, 
-            address: JSON.parse(address), 
+            address: parsedAddress, 
             dob, 
             gender 
         });
 
         if (imageFile) {
-            // Upload image to Cloudinary
             const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: "image" });
-            const imageURL = imageUpload.secure_url;
-
-            await userModel.findByIdAndUpdate(userId, { image: imageURL });
+            await userModel.findByIdAndUpdate(userId, { image: imageUpload.secure_url });
         }
 
         res.json({ success: true, message: "Profile Updated" });

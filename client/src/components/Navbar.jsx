@@ -5,11 +5,13 @@ import { AppContext } from '../context/AppContext'
 
 const Navbar = () => {
     const navigate = useNavigate();
-    const { token, setToken, userData } = useContext(AppContext);
+    const { token, setToken, userData, setUserData } = useContext(AppContext);
+    const authToken = token || localStorage.getItem('token');
 
     // Clears local state and storage to successfully log the user out
     const logout = () => {
-        setToken(false);
+        setToken('');
+        setUserData(false);
         localStorage.removeItem('token');
         navigate('/login');
     };
@@ -24,7 +26,7 @@ const Navbar = () => {
                 </p>
             </div>
             
-            {/* Navigation Links with Active Indicators */}
+            {/* Navigation Links */}
             <ul className='hidden md:flex items-start gap-5 font-medium'>
                 <NavLink to='/'>
                     <li className='py-1'>HOME</li>
@@ -34,26 +36,26 @@ const Navbar = () => {
                     <li className='py-1'>FIND DOCTORS</li>
                     <hr className='border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden' />
                 </NavLink>
-                <NavLink to='/about'>
+                <NavLink to='/hospitals'>
                     <li className='py-1'>HOSPITALS</li>
                     <hr className='border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden' />
                 </NavLink>
-                <NavLink to='/contact'>
+                <NavLink to='/my-appointments'>
                     <li className='py-1'>MY BOOKINGS</li>
                     <hr className='border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden' />
                 </NavLink>
             </ul>
 
             <div className='flex items-center gap-4'>
-                {/* This check is the 'Gatekeeper'. 
-                    If the backend error (userId undefined) is happening, 
-                    userData will be false, and this menu will hide.
+                {/* UPDATED LOGIC: We only check for the token here. 
+                   If a token exists, we show the profile menu immediately.
                 */}
-                {token && userData ? (
+                {authToken ? (
                     <div className='flex items-center gap-2 cursor-pointer group relative'>
                         <img 
                             className='w-8 rounded-full' 
-                            src={userData.image ? userData.image : assets.profile_pic} 
+                            // Optional chaining prevents errors if userData is still fetching
+                            src={userData?.image ? userData.image : assets.profile_pic} 
                             alt="Profile" 
                         />
                         <img className='w-2.5' src={assets.dropdown_icon} alt="" />
@@ -70,7 +72,7 @@ const Navbar = () => {
                 ) : (
                     <button 
                         onClick={() => navigate('/login')} 
-                        className='bg-primary text-white px-8 py-3 rounded-full font-light hidden md:block transition-all hover:scale-105'>
+                        className='bg-indigo-600 text-white px-8 py-3 rounded-full font-medium flex items-center justify-center transition-all hover:bg-indigo-700 hover:scale-105 shadow-sm'>
                         Create account
                     </button>
                 )}

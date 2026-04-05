@@ -6,7 +6,7 @@ const DoctorCard = ({ doctor }) => {
 
   return (
     <div 
-      onClick={() => navigate(`/book-appointment/${doctor._id}`)} 
+      onClick={() => navigate(`/appointment/${doctor._id}`)} 
       className='border border-indigo-100 rounded-2xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500 shadow-sm bg-white'
     >
       <img className='bg-indigo-50 w-full h-48 object-cover' src={doctor.image} alt={doctor.name} />
