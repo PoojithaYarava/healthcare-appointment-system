@@ -2,21 +2,29 @@ import jwt from 'jsonwebtoken';
 
 const authUser = async (req, res, next) => {
     try {
-        const { token } = req.headers;
+        const headerToken = req.headers.token;
+        const authHeader = req.headers.authorization;
+        const bearerToken = authHeader?.startsWith('Bearer ')
+            ? authHeader.slice(7)
+            : authHeader;
+        const token = String(headerToken || bearerToken || '').trim();
+
         if (!token) {
-            return res.json({ success: false, message: "Not Authorized. Login Again" });
+            return res.status(401).json({ success: false, message: "Not Authorized" });
         }
 
-        const token_decode = jwt.verify(token, process.env.JWT_SECRET);
-        
-        // CRITICAL FIX: Ensure req.body exists before adding to it
-        req.body = req.body || {}; 
-        req.body.userId = token_decode.id; 
+        if (!process.env.JWT_SECRET) {
+            return res.status(500).json({ success: false, message: "JWT secret is not configured" });
+        }
 
+        const tokenDecode = jwt.verify(token, process.env.JWT_SECRET);
+
+        req.userId = tokenDecode.id;
         next();
+
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
+        console.error("JWT Verification Failed:", error.message);
+        return res.status(401).json({ success: false, message: error.message });
     }
 };
 

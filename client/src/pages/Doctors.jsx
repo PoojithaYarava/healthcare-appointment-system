@@ -20,7 +20,7 @@ const Doctors = () => {
               <p className='text-gray-900 text-lg font-medium'>{item.name}</p>
               <p className='text-gray-600 text-sm'>{item.speciality}</p>
               <button 
-                onClick={() => navigate(`/book-appointment/${item._id}`)}
+                onClick={() => navigate(`/appointment/${item._id}`)}
                 className='mt-3 w-full py-2 bg-blue-50 text-blue-600 rounded-lg font-medium hover:bg-blue-600 hover:text-white transition-all'
               >
                 Book Now

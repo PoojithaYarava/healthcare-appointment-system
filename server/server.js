@@ -18,14 +18,14 @@ connectDB();
 connectCloudinary();
 
 // Middlewares
-app.use(express.json());
 
-// FIXED: Explicit CORS for Vite
 app.use(cors({
     origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
+
+app.use(express.json());
 
 // API Endpoints
 app.use('/api/admin', adminRouter);

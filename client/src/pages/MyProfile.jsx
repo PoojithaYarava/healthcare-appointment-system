@@ -3,22 +3,42 @@ import { AppContext } from '../context/AppContext'
 import { assets } from '../assets/assets'
 
 const MyProfile = () => {
-    const { userData, setUserData } = useContext(AppContext)
+    const { token, userData, setUserData, isProfileLoading, profileError, loadUserProfileData } = useContext(AppContext)
     const [isEdit, setIsEdit] = useState(false)
 
-    // Helper to display images (handles both uploaded files and existing URLs)
-    const profileImage = userData.image 
-        ? (typeof userData.image === 'string' ? userData.image : URL.createObjectURL(userData.image))
-        : assets.profile_pic
+    if (!token) {
+        return (
+            <div className='flex items-center justify-center min-h-[60vh]'>
+                <p className='text-gray-500'>Please log in to view your profile.</p>
+            </div>
+        )
+    }
 
-    // 1. Guard Clause: If userData hasn't loaded yet, show a loading state
-    if (!userData) {
+    if (isProfileLoading) {
         return (
             <div className='flex items-center justify-center min-h-[60vh]'>
                 <p className='text-gray-500 animate-pulse'>Loading profile data...</p>
             </div>
         )
     }
+
+    if (!userData) {
+        return (
+            <div className='flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center'>
+                <p className='text-gray-500'>{profileError || 'Unable to load profile data.'}</p>
+                <button
+                    onClick={() => loadUserProfileData()}
+                    className='border border-primary px-6 py-2 rounded-full hover:bg-primary hover:text-white transition-all'
+                >
+                    Retry
+                </button>
+            </div>
+        )
+    }
+
+    const profileImage = userData.image
+        ? (typeof userData.image === 'string' ? userData.image : URL.createObjectURL(userData.image))
+        : assets.profile_pic
 
     return (
         <div className='max-w-lg flex flex-col gap-2 text-sm'>
