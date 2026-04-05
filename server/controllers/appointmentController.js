@@ -1,42 +1,58 @@
 import mongoose from "mongoose";
 import appointmentModel from "../models/AppointmentModel.js";
 import doctorModel from "../models/doctorModel.js";
+import userModel from "../models/userModel.js";
 
 const bookAppointment = async (req, res) => {
-    // 1. Start a Session for the Transaction
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const { userId, docId, slotDate, slotTime } = req.body;
+        const userId = req.userId;
+        const { docId, slotDate, slotTime } = req.body;
 
-        // 2. Use the session for the initial find
-        const docData = await doctorModel.findById(docId).session(session);
+        if (!userId || !docId || !slotDate || !slotTime) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, message: "Missing booking details" });
+        }
+
+        const userData = await userModel.findById(userId).select("-password").session(session);
+        if (!userData) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const docData = await doctorModel
+            .findById(docId)
+            .select("-password")
+            .populate("hospitalId", "name location image verified")
+            .session(session);
 
         if (!docData || !docData.available) {
             await session.abortTransaction();
+            session.endSession();
             return res.json({ success: false, message: "Doctor not available" });
         }
 
-        let slots_booked = docData.slots_booked || {};
-
-        // 3. Logic check for availability
-        if (slots_booked[slotDate] && slots_booked[slotDate].includes(slotTime)) {
+        const slotsBooked = docData.slots_booked || {};
+        if (slotsBooked[slotDate] && slotsBooked[slotDate].includes(slotTime)) {
             await session.abortTransaction();
+            session.endSession();
             return res.json({ success: false, message: "Slot already taken" });
         }
 
-        // 4. Update the local object
-        if (!slots_booked[slotDate]) {
-            slots_booked[slotDate] = [];
+        if (!slotsBooked[slotDate]) {
+            slotsBooked[slotDate] = [];
         }
-        slots_booked[slotDate].push(slotTime);
+        slotsBooked[slotDate].push(slotTime);
 
-        // 5. Create Appointment (linked to session)
         const appointmentData = {
             userId,
             docId,
-            docData, // Consider only saving essential doc info to save space
+            userData,
+            docData,
             amount: docData.fees,
             slotTime,
             slotDate,
@@ -46,25 +62,56 @@ const bookAppointment = async (req, res) => {
         const newAppointment = new appointmentModel(appointmentData);
         await newAppointment.save({ session });
 
-        // 6. Update Doctor (linked to session)
-        // Mark 'slots_booked' as modified if it's a Mixed type in Mongoose
-        docData.slots_booked = slots_booked;
-        docData.markModified('slots_booked'); 
+        docData.slots_booked = slotsBooked;
+        docData.markModified("slots_booked");
         await docData.save({ session });
 
-        // 7. Commit everything at once
         await session.commitTransaction();
         session.endSession();
 
-        res.json({ success: true, message: "Appointment Booked Successfully ✅" });
-
+        res.json({ success: true, message: "Appointment booked successfully" });
     } catch (error) {
-        // If anything fails, undo all changes
         await session.abortTransaction();
         session.endSession();
         console.log(error);
-        res.json({ success: false, message: "Booking failed. Please try again." });
+        res.status(500).json({ success: false, message: "Booking failed. Please try again." });
     }
 };
 
-export { bookAppointment };
+const getUserAppointments = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const appointments = await appointmentModel.find({ userId }).sort({ date: -1 });
+        res.json({ success: true, appointments });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const confirmAppointmentPayment = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { appointmentId } = req.body;
+
+        if (!appointmentId) {
+            return res.status(400).json({ success: false, message: "Appointment ID is required" });
+        }
+
+        const appointment = await appointmentModel.findOne({ _id: appointmentId, userId });
+
+        if (!appointment) {
+            return res.status(404).json({ success: false, message: "Appointment not found" });
+        }
+
+        appointment.payment = true;
+        await appointment.save();
+
+        res.json({ success: true, message: "Payment confirmed successfully", appointment });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export { bookAppointment, getUserAppointments, confirmAppointmentPayment };
