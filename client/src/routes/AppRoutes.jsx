@@ -5,6 +5,7 @@ import Hospitals from '../pages/Hospitals';
 import Login from '../pages/Login';
 import Appointment from '../pages/Appointment';
 import MyAppointments from '../pages/MyAppointments';
+import Payments from '../pages/payments';
 
 const AppRoutes = () => {
   return (
@@ -15,6 +16,7 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/appointment/:docId" element={<Appointment />} />
       <Route path="/my-appointments" element={<MyAppointments />} />
+      <Route path="/payments/:appointmentId" element={<Payments />} />
     </Routes>
   );
 };

@@ -21,8 +21,8 @@ const Navbar = () => {
             {/* Logo Section */}
             <div onClick={() => navigate('/')} className='flex items-center gap-2 cursor-pointer'>
                 <img className='w-8' src={assets.logo} alt="Logo" />
-                <p className='text-2xl font-bold text-primary tracking-tight'>
-                    Medi<span className='text-secondary'>Connect</span>
+                <p className='text-2xl font-bold tracking-tight'>
+                    <span className='text-[#3b3486]'>Medi</span><span className='text-[#22c58b]'>Connect</span>
                 </p>
             </div>
             

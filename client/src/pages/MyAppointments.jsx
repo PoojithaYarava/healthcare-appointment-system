@@ -1,40 +1,42 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 
 const MyAppointments = () => {
+  const navigate = useNavigate();
   const { backendUrl, authHeaders, currencySymbol, token } = useContext(AppContext);
   const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const loadAppointments = async () => {
-      if (!token) {
-        setAppointments([]);
-        return;
+  const loadAppointments = useCallback(async () => {
+    if (!token) {
+      setAppointments([]);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const { data } = await axios.get(`${backendUrl}/api/appointment/my-appointments`, {
+        headers: authHeaders()
+      });
+
+      if (data.success) {
+        setAppointments(data.appointments);
+      } else {
+        toast.error(data.message);
       }
-
-      try {
-        setIsLoading(true);
-        const { data } = await axios.get(`${backendUrl}/api/appointment/my-appointments`, {
-          headers: authHeaders()
-        });
-
-        if (data.success) {
-          setAppointments(data.appointments);
-        } else {
-          toast.error(data.message);
-        }
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Unable to load appointments');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadAppointments();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to load appointments');
+    } finally {
+      setIsLoading(false);
+    }
   }, [authHeaders, backendUrl, token]);
+
+  useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
 
   if (!token) {
     return <div className='py-16 text-center text-gray-500'>Please log in to view your appointments.</div>;
@@ -61,10 +63,21 @@ const MyAppointments = () => {
               <p className='text-xs text-gray-500 mt-2'>Date: {item.slotDate} | Time: {item.slotTime}</p>
               <p className='text-xs text-gray-500 mt-1'>Amount: {currencySymbol}{item.amount}</p>
             </div>
-            <div className='flex flex-col gap-2'>
-              <button className='bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm' disabled>
-                {item.payment ? 'Paid' : 'Payment Pending'}
-              </button>
+            <div className='flex flex-col gap-2 min-w-[170px]'>
+              {item.payment ? (
+                <button className='bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm' disabled>
+                  Payment Confirmed
+                </button>
+              ) : (
+                <button
+                  type='button'
+                  onClick={() => navigate(`/payments/${item._id}`, { state: { appointment: item } })}
+                  className='bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors disabled:bg-indigo-300'
+                >
+                  Pay Now
+                </button>
+              )}
+
               <button className='border border-gray-200 text-gray-500 px-4 py-2 rounded-lg text-sm' disabled>
                 {item.cancelled ? 'Cancelled' : item.isCompleted ? 'Completed' : 'Scheduled'}
               </button>

@@ -89,4 +89,29 @@ const getUserAppointments = async (req, res) => {
     }
 };
 
-export { bookAppointment, getUserAppointments };
+const confirmAppointmentPayment = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { appointmentId } = req.body;
+
+        if (!appointmentId) {
+            return res.status(400).json({ success: false, message: "Appointment ID is required" });
+        }
+
+        const appointment = await appointmentModel.findOne({ _id: appointmentId, userId });
+
+        if (!appointment) {
+            return res.status(404).json({ success: false, message: "Appointment not found" });
+        }
+
+        appointment.payment = true;
+        await appointment.save();
+
+        res.json({ success: true, message: "Payment confirmed successfully", appointment });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export { bookAppointment, getUserAppointments, confirmAppointmentPayment };
