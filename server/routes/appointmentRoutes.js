@@ -1,9 +1,10 @@
 import express from 'express';
-import { bookAppointment } from '../controllers/appointmentController.js';
+import { bookAppointment, getUserAppointments } from '../controllers/appointmentController.js';
+import authUser from '../middlewares/authUser.js';
 
 const appointmentRouter = express.Router();
 
-// This defines the endpoint: /api/appointment/book-appointment
-appointmentRouter.post('/book-appointment', bookAppointment);
+appointmentRouter.post('/book-appointment', authUser, bookAppointment);
+appointmentRouter.get('/my-appointments', authUser, getUserAppointments);
 
 export default appointmentRouter;

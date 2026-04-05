@@ -3,19 +3,27 @@ import { AppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
 const Doctors = () => {
-  const { doctors } = useContext(AppContext);
+  const { doctors, isDataLoading } = useContext(AppContext);
   const navigate = useNavigate();
+
+  if (isDataLoading && !doctors.length) {
+    return <div className='py-16 text-center text-gray-500'>Loading doctors...</div>;
+  }
 
   return (
     <div className='p-4 max-w-6xl mx-auto'>
       <h1 className='text-2xl font-semibold text-gray-800 mb-6'>Find your Specialist at MediConnect</h1>
+      {!doctors.length && (
+        <p className='mb-6 text-gray-500'>No doctors are available yet. Seed your Atlas database or add doctors from the admin flow.</p>
+      )}
       <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
         {doctors.map((item, index) => (
-          <div key={index} className='border border-blue-100 rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500 shadow-sm'>
+          <div key={item._id || index} className='border border-blue-100 rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500 shadow-sm'>
             <img className='bg-blue-50 w-full h-48 object-cover' src={item.image} alt="" />
             <div className='p-4'>
-              <div className='flex items-center gap-2 text-sm text-center text-green-500'>
-                <p className='w-2 h-2 bg-green-500 rounded-full'></p><p>Available</p>
+              <div className={`flex items-center gap-2 text-sm text-center ${item.available ? 'text-green-500' : 'text-red-500'}`}>
+                <p className={`w-2 h-2 rounded-full ${item.available ? 'bg-green-500' : 'bg-red-500'}`}></p>
+                <p>{item.available ? 'Available' : 'Unavailable'}</p>
               </div>
               <p className='text-gray-900 text-lg font-medium'>{item.name}</p>
               <p className='text-gray-600 text-sm'>{item.speciality}</p>

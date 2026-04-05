@@ -7,6 +7,7 @@ import connectCloudinary from './config/cloudinary.js';
 // Import Routers
 import adminRouter from './routes/adminRoute.js';
 import appointmentRouter from './routes/appointmentRoutes.js';
+import publicRouter from './routes/publicRoute.js';
 import userRouter from './routes/userRoute.js'; // Ensure this file exists!
 
 // App Config
@@ -30,6 +31,7 @@ app.use(express.json());
 // API Endpoints
 app.use('/api/admin', adminRouter);
 app.use('/api/appointment', appointmentRouter);
+app.use('/api/data', publicRouter);
 app.use('/api/user', userRouter); // This maps to your login/register logic
 
 app.get('/', (req, res) => {
