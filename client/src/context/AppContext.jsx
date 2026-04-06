@@ -4,8 +4,12 @@ import { AppContext } from "./appContextInstance";
 
 export { AppContext } from "./appContextInstance";
 
+const defaultBackendUrl = import.meta.env.PROD
+    ? "https://healthcare-backend-18e1.onrender.com"
+    : "http://localhost:4000";
+
 const AppContextProvider = (props) => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL || defaultBackendUrl).replace(/\/+$/, "");
     const [token, setToken] = useState(() => localStorage.getItem("token") || "");
     const [authRole, setAuthRole] = useState(() => localStorage.getItem("authRole") || (localStorage.getItem("token") ? "user" : ""));
     const [userData, setUserData] = useState(false);

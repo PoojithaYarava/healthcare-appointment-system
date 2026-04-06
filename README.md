@@ -93,6 +93,12 @@ cd client
 npm run dev
 ```
 
+Create `client/.env` for local or hosted frontend builds:
+
+```env
+VITE_BACKEND_URL=https://healthcare-backend-18e1.onrender.com
+```
+
 ## Deployment
 
 - Frontend deployed on Vercel

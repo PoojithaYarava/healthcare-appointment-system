@@ -20,6 +20,7 @@ const allowedOrigins = [
     process.env.FRONTEND_URL,
     process.env.FRONTEND_URL_ALT
 ].filter(Boolean);
+const allowedVercelHostPattern = /^https:\/\/healthcare-appointment-system(?:-[a-z0-9-]+)?\.vercel\.app$/i;
 
 // Connect to Database and Cloudinary
 connectDB();
@@ -29,8 +30,10 @@ connectCloudinary();
 
 app.use(cors({
     origin: (origin, callback) => {
+        const isAllowedVercelDeployment = origin ? allowedVercelHostPattern.test(origin) : false;
+
         // Allow server-to-server requests and configured frontend origins.
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || allowedOrigins.includes(origin) || isAllowedVercelDeployment) {
             return callback(null, true);
         }
 
