@@ -97,7 +97,7 @@ const Login = () => {
 
   return (
     <form onSubmit={onSubmitHandler} className='min-h-[80vh] flex items-center justify-center px-4'>
-      <div className='flex flex-col gap-3 m-auto items-start p-8 min-w-[340px] sm:min-w-[28rem] border rounded-xl text-zinc-600 text-sm shadow-lg bg-white'>
+      <div className='m-auto flex min-w-[0] w-full max-w-[28rem] flex-col items-start gap-3 rounded-xl border bg-white p-5 text-sm text-zinc-600 shadow-lg sm:min-w-[28rem] sm:p-8'>
         <div className='w-full'>
           <p className='text-xs font-semibold uppercase tracking-[0.2em] text-gray-400 mb-3'>Account Type</p>
           <div className='grid grid-cols-2 gap-2 rounded-lg bg-slate-100 p-1'>

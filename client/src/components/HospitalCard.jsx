@@ -1,21 +1,28 @@
-// src/components/HospitalCard.jsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const HospitalCard = ({ name, address, image }) => {
+const HospitalCard = ({ id, name, address, image }) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group">
+    <div className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:shadow-lg">
       <div className="relative overflow-hidden">
-        <img src={image} alt={name} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold text-blue-600">
+        <img src={image} alt={name} className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <div className="absolute right-2 top-2 rounded bg-white/90 px-2 py-1 text-xs font-bold text-blue-600">
           Verified
         </div>
       </div>
       <div className="p-5">
-        <h3 className="text-xl font-bold text-gray-800 mb-1">{name}</h3>
-        <p className="text-gray-500 text-sm mb-4 flex items-center gap-1">
-           📍 {address}
+        <h3 className="mb-1 text-xl font-bold text-gray-800">{name}</h3>
+        <p className="mb-4 flex items-center gap-1 text-sm text-gray-500">
+          <span aria-hidden="true">📍</span>
+          {address}
         </p>
-        <button className="w-full py-2.5 bg-blue-50 text-blue-600 rounded-xl font-semibold hover:bg-blue-600 hover:text-white transition-colors">
+        <button
+          type="button"
+          onClick={() => navigate(`/doctors?hospital=${id}`)}
+          className="w-full rounded-xl bg-blue-50 py-2.5 font-semibold text-blue-600 transition-colors hover:bg-blue-600 hover:text-white"
+        >
           View Specialists
         </button>
       </div>

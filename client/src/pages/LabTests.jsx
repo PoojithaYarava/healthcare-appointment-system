@@ -130,8 +130,8 @@ const LabTests = () => {
     <div className='mx-auto max-w-7xl px-4 py-4'>
       <div className='rounded-[2rem] bg-gradient-to-r from-rose-50 via-white to-sky-50 px-6 py-10 shadow-sm'>
         <p className='text-sm font-semibold uppercase tracking-[0.25em] text-rose-500'>At-home diagnostics</p>
-        <h1 className='mt-3 text-4xl font-bold text-slate-900'>Book lab tests with home sample collection</h1>
-        <p className='mt-3 max-w-3xl text-sm text-slate-600'>
+        <h1 className='mt-3 text-3xl font-bold text-slate-900 sm:text-4xl'>Book lab tests with home sample collection</h1>
+        <p className='mt-3 max-w-3xl text-sm leading-6 text-slate-600'>
           Select a test type, review the available tests, and schedule a home sample pickup with patient and collection details.
         </p>
       </div>
@@ -166,13 +166,13 @@ const LabTests = () => {
           </button>
         </div>
 
-        <div className='mt-5 flex flex-wrap gap-3'>
+        <div className='mt-5 flex gap-3 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible sm:pb-0'>
           {categories.map((category) => (
             <button
               key={category}
               type='button'
               onClick={() => setSelectedCategory(category)}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${selectedCategory === category ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+              className={`whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium transition-colors ${selectedCategory === category ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
             >
               {category}
             </button>
@@ -234,12 +234,12 @@ const LabTests = () => {
       )}
 
       {isBookingOpen && selectedTest && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-8'>
-          <div className='max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] bg-white p-6 shadow-2xl'>
-            <div className='flex items-start justify-between gap-4'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6'>
+          <div className='max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] bg-white p-5 shadow-2xl sm:p-6'>
+            <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
               <div>
                 <p className='text-xs font-semibold uppercase tracking-[0.25em] text-rose-500'>Sample collection details</p>
-                <h2 className='mt-2 text-3xl font-bold text-slate-900'>{selectedTest.name}</h2>
+                <h2 className='mt-2 text-2xl font-bold text-slate-900 sm:text-3xl'>{selectedTest.name}</h2>
                 <p className='mt-2 text-sm text-slate-500'>
                   Enter patient and pickup details so the home sample collection team can visit the correct address.
                 </p>

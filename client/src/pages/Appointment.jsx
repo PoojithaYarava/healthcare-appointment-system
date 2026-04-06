@@ -129,43 +129,43 @@ const Appointment = () => {
 
   return (
     <div>
-      <div className='flex flex-col sm:flex-row gap-4'>
+      <div className='flex flex-col gap-4 sm:flex-row'>
         <div>
-          <img className='bg-indigo-100 w-full sm:max-w-72 rounded-lg' src={docInfo.image} alt={docInfo.name} />
+          <img className='w-full rounded-lg bg-indigo-100 sm:max-w-72' src={docInfo.image} alt={docInfo.name} />
         </div>
 
-        <div className='flex-1 border border-gray-400 rounded-lg p-8 py-7 bg-white mx-2 sm:mx-0 mt-[-80px] sm:mt-0'>
-          <p className='flex items-center gap-2 text-2xl font-medium text-gray-900'>
+        <div className='mx-0 mt-0 flex-1 rounded-lg border border-gray-400 bg-white p-5 py-7 sm:mx-0 sm:p-8'>
+          <p className='flex flex-wrap items-center gap-2 text-2xl font-medium text-gray-900'>
             {docInfo.name}
             <img className='w-5' src={assets.verified_icon} alt='' />
           </p>
-          <div className='flex items-center gap-2 text-sm mt-1 text-gray-600'>
+          <div className='mt-1 flex flex-col gap-2 text-sm text-gray-600 sm:flex-row sm:items-center'>
             <p>{docInfo.degree} - {docInfo.speciality}</p>
-            <button className='py-0.5 px-2 border text-xs rounded-full'>{docInfo.experience}</button>
+            <button className='rounded-full border px-2 py-0.5 text-xs'>{docInfo.experience}</button>
           </div>
 
           <div>
-            <p className='flex items-center gap-1 text-sm font-medium text-gray-900 mt-3'>
+            <p className='mt-3 flex items-center gap-1 text-sm font-medium text-gray-900'>
               About <img src={assets.info_icon} alt='' />
             </p>
-            <p className='text-sm text-gray-500 max-w-[700px] mt-1'>{docInfo.about}</p>
+            <p className='mt-1 max-w-[700px] text-sm text-gray-500'>{docInfo.about}</p>
           </div>
 
           {docInfo.hospitalId && (
-            <p className='text-sm text-gray-500 mt-3'>
+            <p className='mt-3 text-sm text-gray-500'>
               Hospital: <span className='text-gray-800'>{docInfo.hospitalId.name}</span>
             </p>
           )}
 
-          <p className='text-gray-500 font-medium mt-4'>
+          <p className='mt-4 font-medium text-gray-500'>
             Appointment fee: <span className='text-gray-800'>{currencySymbol}{docInfo.fees}</span>
           </p>
         </div>
       </div>
 
-      <div className='sm:ml-72 sm:pl-4 mt-4 font-medium text-gray-700'>
+      <div className='mt-4 font-medium text-gray-700 sm:ml-72 sm:pl-4'>
         <p>Booking slots</p>
-        <div className='flex gap-4 overflow-x-auto mt-4 pb-2'>
+        <div className='mt-4 flex gap-3 overflow-x-auto pb-2'>
           {docSlots.map((daySlots, index) => (
             <button
               key={daySlots[0].slotDate}
@@ -174,7 +174,7 @@ const Appointment = () => {
                 setSlotIndex(index)
                 setSlotTime(daySlots[0]?.time || '')
               }}
-              className={`min-w-16 rounded-full border px-4 py-3 text-center transition-colors ${slotIndex === index ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'}`}
+              className={`min-w-[72px] rounded-full border px-4 py-3 text-center transition-colors ${slotIndex === index ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:border-indigo-300'}`}
             >
               <p className='text-xs'>{daySlots[0].datetime.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()}</p>
               <p className='text-lg'>{daySlots[0].datetime.getDate()}</p>
@@ -182,13 +182,13 @@ const Appointment = () => {
           ))}
         </div>
 
-        <div className='flex flex-wrap gap-3 mt-6'>
+        <div className='mt-6 flex flex-wrap gap-3'>
           {docSlots[slotIndex]?.map((slot) => (
             <button
               key={`${slot.slotDate}-${slot.time}`}
               type='button'
               onClick={() => setSlotTime(slot.time)}
-              className={`px-5 py-2 rounded-full text-sm border transition-colors ${slot.time === slotTime ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'text-gray-600 border-gray-300 hover:border-indigo-300 hover:text-indigo-600'}`}
+              className={`rounded-full border px-4 py-2.5 text-sm transition-colors sm:px-5 ${slot.time === slotTime ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' : 'border-gray-300 text-gray-600 hover:border-indigo-300 hover:text-indigo-600'}`}
             >
               {slot.time}
             </button>
@@ -203,7 +203,7 @@ const Appointment = () => {
           type='button'
           onClick={bookAppointment}
           disabled={isBooking || !docSlots.length}
-          className='bg-indigo-600 text-white text-sm font-medium px-14 py-3 rounded-full my-6 shadow-md hover:bg-indigo-700 transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none'
+          className='my-6 min-h-[52px] w-full rounded-full bg-indigo-600 px-8 py-3 text-sm font-medium text-white shadow-md transition-colors hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none sm:w-auto sm:px-14'
         >
           {isBooking ? 'Booking...' : 'Book an appointment'}
         </button>

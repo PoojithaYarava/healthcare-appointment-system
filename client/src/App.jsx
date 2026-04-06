@@ -26,7 +26,7 @@ const App = () => {
   const isAdminPage = location.pathname.startsWith('/admin')
 
   return (
-    <div className='mx-4 sm:mx-[10%] flex flex-col min-h-screen'>
+    <div className='mx-4 flex min-h-screen flex-col sm:mx-[10%]'>
       <ToastContainer />
       <Navbar />
       <div className={`flex-1 ${(isDoctorDashboard || isAdminPage) ? 'pb-4' : ''}`}>

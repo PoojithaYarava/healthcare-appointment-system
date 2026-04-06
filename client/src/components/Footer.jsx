@@ -3,11 +3,11 @@ import { assets } from '../assets/assets'
 
 const Footer = ({ compact = false }) => {
   return (
-    <div className={`md:mx-10 border-t border-gray-200 ${compact ? 'mt-10' : 'mt-20'}`}>
-      <div className={`flex flex-col sm:grid grid-cols-[3fr_1fr_1fr] gap-14 text-sm text-gray-600 ${compact ? 'my-8' : 'my-10'}`}>
+    <div className={`border-t border-gray-200 ${compact ? 'mt-10' : 'mt-20'}`}>
+      <div className={`grid grid-cols-1 gap-10 px-2 text-sm text-gray-600 sm:grid-cols-[3fr_1fr_1fr] sm:gap-14 md:mx-10 md:px-0 ${compact ? 'my-8' : 'my-10'}`}>
         <div>
           <img className='mb-5 w-40' src={assets.logo} alt="" />
-          <p className='w-full md:w-2/3 leading-6'>
+          <p className='w-full max-w-xl leading-6'>
             MediConnect is your trusted partner in digital healthcare. Book
             appointments with top specialists instantly and manage your health.
           </p>
