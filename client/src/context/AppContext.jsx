@@ -15,6 +15,7 @@ const AppContextProvider = (props) => {
     const [profileError, setProfileError] = useState("");
     const [doctors, setDoctors] = useState([]);
     const [hospitals, setHospitals] = useState([]);
+    const [labTests, setLabTests] = useState([]);
     const [isDataLoading, setIsDataLoading] = useState(false);
     const currencySymbol = "Rs. ";
 
@@ -45,6 +46,17 @@ const AppContextProvider = (props) => {
             }
         } catch (error) {
             console.error("Hospitals Fetch Error:", error.message);
+        }
+    }, [backendUrl]);
+
+    const loadLabTests = useCallback(async () => {
+        try {
+            const { data } = await axios.get(`${backendUrl}/api/data/lab-tests`);
+            if (data.success) {
+                setLabTests(data.labTests);
+            }
+        } catch (error) {
+            console.error("Lab Tests Fetch Error:", error.message);
         }
     }, [backendUrl]);
 
@@ -120,7 +132,8 @@ const AppContextProvider = (props) => {
     useEffect(() => {
         loadDoctors();
         loadHospitals();
-    }, [loadDoctors, loadHospitals]);
+        loadLabTests();
+    }, [loadDoctors, loadHospitals, loadLabTests]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -182,9 +195,11 @@ const AppContextProvider = (props) => {
         clearSession,
         doctors,
         hospitals,
+        labTests,
         isDataLoading,
         loadDoctors,
         loadHospitals,
+        loadLabTests,
         currencySymbol
     };
 

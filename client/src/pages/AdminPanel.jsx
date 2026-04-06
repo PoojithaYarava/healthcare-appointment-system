@@ -25,27 +25,44 @@ const initialDoctorForm = {
   hospitalId: ''
 };
 
+const initialLabTestForm = {
+  name: '',
+  category: '',
+  sampleType: '',
+  reportTime: '',
+  price: '',
+  description: '',
+  preparations: '',
+  image: ''
+};
+
 const AdminPanel = () => {
   const { backendUrl, currencySymbol, loadDoctors, loadHospitals, authHeaders, authRole, token, adminData } = useContext(AppContext);
   const [pendingDoctors, setPendingDoctors] = useState([]);
   const [allDoctors, setAllDoctors] = useState([]);
   const [allHospitals, setAllHospitals] = useState([]);
+  const [allLabTests, setAllLabTests] = useState([]);
+  const [labBookings, setLabBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionId, setActionId] = useState('');
   const [hospitalForm, setHospitalForm] = useState(initialHospitalForm);
   const [doctorForm, setDoctorForm] = useState(initialDoctorForm);
+  const [labTestForm, setLabTestForm] = useState(initialLabTestForm);
   const [doctorImage, setDoctorImage] = useState(null);
   const [isSubmittingHospital, setIsSubmittingHospital] = useState(false);
   const [isSubmittingDoctor, setIsSubmittingDoctor] = useState(false);
+  const [isSubmittingLabTest, setIsSubmittingLabTest] = useState(false);
 
   const loadAdminData = useCallback(async () => {
     try {
       setIsLoading(true);
       const requestConfig = { headers: authHeaders() };
-      const [pendingResponse, doctorsResponse, hospitalsResponse] = await Promise.all([
+      const [pendingResponse, doctorsResponse, hospitalsResponse, labTestsResponse, labBookingsResponse] = await Promise.all([
         axios.get(`${backendUrl}/api/admin/pending-doctors`, requestConfig),
         axios.get(`${backendUrl}/api/admin/doctors`, requestConfig),
-        axios.get(`${backendUrl}/api/admin/hospitals`, requestConfig)
+        axios.get(`${backendUrl}/api/admin/hospitals`, requestConfig),
+        axios.get(`${backendUrl}/api/admin/lab-tests`, requestConfig),
+        axios.get(`${backendUrl}/api/admin/lab-bookings`, requestConfig)
       ]);
 
       if (pendingResponse.data.success) {
@@ -58,6 +75,14 @@ const AdminPanel = () => {
 
       if (hospitalsResponse.data.success) {
         setAllHospitals(hospitalsResponse.data.hospitals);
+      }
+
+      if (labTestsResponse.data.success) {
+        setAllLabTests(labTestsResponse.data.labTests);
+      }
+
+      if (labBookingsResponse.data.success) {
+        setLabBookings(labBookingsResponse.data.bookings);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Unable to load admin data');
@@ -75,8 +100,10 @@ const AdminPanel = () => {
   const stats = useMemo(() => ({
     pending: pendingDoctors.length,
     approved: allDoctors.filter((doctor) => doctor.isApproved).length,
-    hospitals: allHospitals.length
-  }), [allDoctors, allHospitals.length, pendingDoctors.length]);
+    hospitals: allHospitals.length,
+    labTests: allLabTests.length,
+    sampleRequests: labBookings.filter((booking) => booking.status === 'requested').length
+  }), [allDoctors, allHospitals.length, allLabTests.length, labBookings, pendingDoctors.length]);
 
   const handleDoctorStatus = async (doctorId, action) => {
     try {
@@ -96,6 +123,50 @@ const AdminPanel = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Unable to update doctor status');
+    } finally {
+      setActionId('');
+    }
+  };
+
+  const handleLabTestSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      setIsSubmittingLabTest(true);
+      const { data } = await axios.post(`${backendUrl}/api/admin/add-lab-test`, labTestForm, {
+        headers: authHeaders()
+      });
+
+      if (data.success) {
+        toast.success(data.message);
+        setLabTestForm(initialLabTestForm);
+        await loadAdminData();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to add lab test');
+    } finally {
+      setIsSubmittingLabTest(false);
+    }
+  };
+
+  const handleLabBookingStatus = async (bookingId, status) => {
+    try {
+      setActionId(`${bookingId}-${status}`);
+      const { data } = await axios.post(
+        `${backendUrl}/api/admin/update-lab-booking-status`,
+        { bookingId, status },
+        { headers: authHeaders() }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        await loadAdminData();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to update lab booking');
     } finally {
       setActionId('');
     }
@@ -185,7 +256,7 @@ const AdminPanel = () => {
         <p className='mt-4 text-sm text-emerald-100'>Signed in as {adminData?.email || 'Admin'}</p>
       </div>
 
-      <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
+      <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-5'>
         <div className='rounded-2xl border border-amber-200 bg-amber-50 p-5'>
           <p className='text-sm text-amber-700'>Pending Approvals</p>
           <p className='mt-2 text-3xl font-bold text-amber-900'>{stats.pending}</p>
@@ -197,6 +268,14 @@ const AdminPanel = () => {
         <div className='rounded-2xl border border-sky-200 bg-sky-50 p-5'>
           <p className='text-sm text-sky-700'>Hospitals</p>
           <p className='mt-2 text-3xl font-bold text-sky-900'>{stats.hospitals}</p>
+        </div>
+        <div className='rounded-2xl border border-rose-200 bg-rose-50 p-5'>
+          <p className='text-sm text-rose-700'>Lab Tests</p>
+          <p className='mt-2 text-3xl font-bold text-rose-900'>{stats.labTests}</p>
+        </div>
+        <div className='rounded-2xl border border-violet-200 bg-violet-50 p-5'>
+          <p className='text-sm text-violet-700'>Home Sample Requests</p>
+          <p className='mt-2 text-3xl font-bold text-violet-900'>{stats.sampleRequests}</p>
         </div>
       </div>
 
@@ -328,10 +407,33 @@ const AdminPanel = () => {
               </button>
             </form>
           </section>
+
+          <section className='rounded-3xl border border-slate-200 bg-white p-6 shadow-sm'>
+            <h2 className='text-2xl font-semibold text-slate-900'>Add Lab Test</h2>
+            <p className='mt-1 text-sm text-slate-500'>Publish tests that can be booked online with home sample collection.</p>
+
+            <form onSubmit={handleLabTestSubmit} className='mt-5 space-y-4'>
+              <input className='w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-500' placeholder='Test name' value={labTestForm.name} onChange={(e) => setLabTestForm((prev) => ({ ...prev, name: e.target.value }))} required />
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <input className='w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-500' placeholder='Category' value={labTestForm.category} onChange={(e) => setLabTestForm((prev) => ({ ...prev, category: e.target.value }))} required />
+                <input className='w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-500' placeholder='Sample type' value={labTestForm.sampleType} onChange={(e) => setLabTestForm((prev) => ({ ...prev, sampleType: e.target.value }))} required />
+              </div>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <input className='w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-500' placeholder='Report time' value={labTestForm.reportTime} onChange={(e) => setLabTestForm((prev) => ({ ...prev, reportTime: e.target.value }))} required />
+                <input className='w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-500' placeholder='Price' type='number' value={labTestForm.price} onChange={(e) => setLabTestForm((prev) => ({ ...prev, price: e.target.value }))} required />
+              </div>
+              <input className='w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-500' placeholder='Image URL (optional)' value={labTestForm.image} onChange={(e) => setLabTestForm((prev) => ({ ...prev, image: e.target.value }))} />
+              <textarea className='min-h-24 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-500' placeholder='Description' value={labTestForm.description} onChange={(e) => setLabTestForm((prev) => ({ ...prev, description: e.target.value }))} required />
+              <textarea className='min-h-24 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-500' placeholder='Preparation notes' value={labTestForm.preparations} onChange={(e) => setLabTestForm((prev) => ({ ...prev, preparations: e.target.value }))} />
+              <button type='submit' disabled={isSubmittingLabTest} className='w-full rounded-xl bg-rose-500 px-4 py-3 text-sm font-semibold text-white hover:bg-rose-600 disabled:bg-rose-300'>
+                {isSubmittingLabTest ? 'Adding Lab Test...' : 'Add Lab Test'}
+              </button>
+            </form>
+          </section>
         </div>
       </div>
 
-      <div className='mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2'>
+      <div className='mt-8 grid grid-cols-1 gap-6 xl:grid-cols-3'>
         <section className='rounded-3xl border border-slate-200 bg-white p-6 shadow-sm'>
           <h2 className='text-2xl font-semibold text-slate-900'>Doctors Directory</h2>
           <p className='mt-1 text-sm text-slate-500'>All doctors, including approval status and hospital mapping.</p>
@@ -367,7 +469,76 @@ const AdminPanel = () => {
             ))}
           </div>
         </section>
+
+        <section className='rounded-3xl border border-slate-200 bg-white p-6 shadow-sm'>
+          <h2 className='text-2xl font-semibold text-slate-900'>Lab Tests Directory</h2>
+          <p className='mt-1 text-sm text-slate-500'>Tests available for online home sample booking.</p>
+          <div className='mt-5 space-y-3'>
+            {allLabTests.map((test) => (
+              <div key={test._id} className='rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4'>
+                <div className='flex items-center justify-between gap-3'>
+                  <p className='font-semibold text-slate-900'>{test.name}</p>
+                  <span className='rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700'>{currencySymbol}{test.price}</span>
+                </div>
+                <p className='mt-1 text-sm text-slate-600'>{test.category} • {test.sampleType}</p>
+                <p className='mt-1 text-sm text-slate-600'>Reports in {test.reportTime}</p>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
+
+      <section className='mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm'>
+        <div className='flex items-center justify-between gap-4'>
+          <div>
+            <h2 className='text-2xl font-semibold text-slate-900'>Home Sample Requests</h2>
+            <p className='mt-1 text-sm text-slate-500'>Track lab bookings and update collection/report status.</p>
+          </div>
+          <button
+            type='button'
+            onClick={loadAdminData}
+            className='rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50'
+          >
+            Refresh
+          </button>
+        </div>
+
+        {!labBookings.length ? (
+          <div className='mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-500'>
+            No home sample requests yet.
+          </div>
+        ) : (
+          <div className='mt-6 space-y-4'>
+            {labBookings.map((booking) => (
+              <div key={booking._id} className='rounded-2xl border border-slate-200 bg-slate-50 p-5'>
+                <div className='flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
+                  <div>
+                    <div className='flex flex-wrap items-center gap-3'>
+                      <p className='text-xl font-semibold text-slate-900'>{booking.testData?.name}</p>
+                      <span className='rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700'>{booking.status}</span>
+                    </div>
+                    <p className='mt-2 text-sm text-slate-600'>Patient: {booking.patientName} • {booking.phone}</p>
+                    {booking.patientAge && <p className='mt-1 text-sm text-slate-600'>Age / Gender: {booking.patientAge} • {booking.gender || 'Not provided'}</p>}
+                    <p className='mt-1 text-sm text-slate-600'>Pickup: {booking.preferredDate} • {booking.preferredTime}</p>
+                    <p className='mt-1 text-sm text-slate-600'>Address: {booking.address?.line1}{booking.address?.line2 ? `, ${booking.address.line2}` : ''}</p>
+                    {booking.landmark && <p className='mt-1 text-sm text-slate-600'>Landmark: {booking.landmark}</p>}
+                    {booking.alternatePhone && <p className='mt-1 text-sm text-slate-600'>Alternate phone: {booking.alternatePhone}</p>}
+                    {booking.notes && <p className='mt-1 text-sm text-slate-600'>Notes: {booking.notes}</p>}
+                    {booking.collectionInstructions && <p className='mt-1 text-sm text-slate-600'>Collection instructions: {booking.collectionInstructions}</p>}
+                  </div>
+
+                  <div className='grid min-w-[220px] grid-cols-2 gap-3'>
+                    <button type='button' disabled={actionId === `${booking._id}-sample-collected`} onClick={() => handleLabBookingStatus(booking._id, 'sample-collected')} className='rounded-xl bg-sky-600 px-4 py-3 text-sm font-medium text-white hover:bg-sky-700 disabled:bg-sky-300'>Collected</button>
+                    <button type='button' disabled={actionId === `${booking._id}-processing`} onClick={() => handleLabBookingStatus(booking._id, 'processing')} className='rounded-xl bg-amber-500 px-4 py-3 text-sm font-medium text-white hover:bg-amber-600 disabled:bg-amber-300'>Processing</button>
+                    <button type='button' disabled={actionId === `${booking._id}-report-ready`} onClick={() => handleLabBookingStatus(booking._id, 'report-ready')} className='rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white hover:bg-emerald-700 disabled:bg-emerald-300'>Report Ready</button>
+                    <button type='button' disabled={actionId === `${booking._id}-cancelled`} onClick={() => handleLabBookingStatus(booking._id, 'cancelled')} className='rounded-xl bg-rose-600 px-4 py-3 text-sm font-medium text-white hover:bg-rose-700 disabled:bg-rose-300'>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 };

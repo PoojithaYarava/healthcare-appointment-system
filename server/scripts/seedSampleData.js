@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import hospitalModel from "../models/hospitalModel.js";
 import doctorModel from "../models/doctorModel.js";
+import labTestModel from "../models/LabTestModel.js";
 
 const sampleHospitals = [
     {
@@ -80,12 +81,46 @@ const sampleDoctors = [
     }
 ];
 
+const sampleLabTests = [
+    {
+        name: "Complete Blood Count (CBC)",
+        category: "Routine Health",
+        sampleType: "Blood Sample",
+        reportTime: "Within 12 hours",
+        price: 499,
+        description: "A common screening test that evaluates red cells, white cells, hemoglobin, and platelets.",
+        preparations: "No fasting required. Stay hydrated before sample collection.",
+        image: "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+        name: "Thyroid Profile (T3, T4, TSH)",
+        category: "Hormonal Health",
+        sampleType: "Blood Sample",
+        reportTime: "Same day evening",
+        price: 799,
+        description: "Checks thyroid hormone levels to support diagnosis of hypo- or hyperthyroidism.",
+        preparations: "Morning collection preferred. Inform the team about ongoing thyroid medication.",
+        image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+        name: "Diabetes Screening (HbA1c + Fasting Sugar)",
+        category: "Diabetes Care",
+        sampleType: "Blood Sample",
+        reportTime: "Within 24 hours",
+        price: 899,
+        description: "Useful for screening and ongoing monitoring of blood sugar control over time.",
+        preparations: "Fast for 8 to 10 hours before collection unless advised otherwise by your doctor.",
+        image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=900&q=80"
+    }
+];
+
 const seed = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
 
         await hospitalModel.deleteMany({});
         await doctorModel.deleteMany({});
+        await labTestModel.deleteMany({});
 
         const hospitals = await hospitalModel.insertMany(sampleHospitals);
         const hospitalMap = new Map(hospitals.map((hospital) => [hospital.name, hospital._id]));
@@ -102,8 +137,9 @@ const seed = async () => {
 
         const doctorsToInsert = doctorsWithHashes.map(({ hospitalName, ...doctor }) => doctor);
         await doctorModel.insertMany(doctorsToInsert);
+        await labTestModel.insertMany(sampleLabTests);
 
-        console.log("Sample hospitals and doctors seeded successfully.");
+        console.log("Sample hospitals, doctors, and lab tests seeded successfully.");
     } catch (error) {
         console.error("Seeding failed:", error.message);
         process.exitCode = 1;

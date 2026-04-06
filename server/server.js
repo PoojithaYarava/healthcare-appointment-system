@@ -8,6 +8,7 @@ import connectCloudinary from './config/cloudinary.js';
 import adminRouter from './routes/adminRoute.js';
 import appointmentRouter from './routes/appointmentRoutes.js';
 import doctorRouter from './routes/doctorRoute.js';
+import labTestRouter from './routes/labTestRoute.js';
 import publicRouter from './routes/publicRoute.js';
 import userRouter from './routes/userRoute.js'; // Ensure this file exists!
 
@@ -34,6 +35,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/appointment', appointmentRouter);
 app.use('/api/data', publicRouter);
 app.use('/api/doctor', doctorRouter);
+app.use('/api/lab-tests', labTestRouter);
 app.use('/api/user', userRouter); // This maps to your login/register logic
 
 app.get('/', (req, res) => {
