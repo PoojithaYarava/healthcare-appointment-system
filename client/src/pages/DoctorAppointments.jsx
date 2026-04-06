@@ -16,6 +16,7 @@ const DoctorAppointments = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [activeAction, setActiveAction] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [linkDrafts, setLinkDrafts] = useState({});
 
   const loadAppointments = useCallback(async () => {
     if (!token || authRole !== 'doctor') {
@@ -86,6 +87,36 @@ const DoctorAppointments = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Unable to update appointment');
+    } finally {
+      setActiveAction('');
+    }
+  };
+
+  const saveConsultationLink = async (appointmentId) => {
+    const consultationLink = linkDrafts[appointmentId]?.trim();
+    if (!consultationLink) {
+      toast.error('Please enter a consultation link first');
+      return;
+    }
+
+    try {
+      setActiveAction(`${appointmentId}-link`);
+      const { data } = await axios.post(
+        `${backendUrl}/api/doctor/appointments/update-link`,
+        { appointmentId, consultationLink },
+        { headers: authHeaders() }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        setAppointments((current) => current.map((item) => (
+          item._id === appointmentId ? data.appointment : item
+        )));
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to save consultation link');
     } finally {
       setActiveAction('');
     }
@@ -226,10 +257,16 @@ const DoctorAppointments = () => {
                       </span>
                     </div>
                     <p className='text-sm text-gray-600'>Date: {item.slotDate} at {item.slotTime}</p>
+                    <p className='text-sm text-gray-600'>Mode: {item.appointmentMode === 'telemedicine' ? 'Telemedicine' : 'In-person'}</p>
                     <p className='text-sm text-gray-600'>Patient email: {item.userData?.email || 'Not provided'}</p>
                     <p className='text-sm text-gray-600'>Patient phone: {item.userData?.phone || 'Not provided'}</p>
                     <p className='text-sm text-gray-600'>Fee: {currencySymbol}{item.amount}</p>
                     <p className='text-sm text-gray-600'>Payment: {item.payment ? 'Received' : 'Pending'}</p>
+                    {item.appointmentMode === 'telemedicine' && item.consultationLink && (
+                      <a href={item.consultationLink} target='_blank' rel='noreferrer' className='inline-flex text-sm font-medium text-emerald-700 hover:text-emerald-800'>
+                        Open consultation link
+                      </a>
+                    )}
                   </div>
 
                   <div className='flex flex-col gap-3 min-w-[220px]'>
@@ -249,6 +286,25 @@ const DoctorAppointments = () => {
                     >
                       {activeAction === `${item._id}-confirm` ? 'Confirming...' : item.isCompleted ? 'Confirmed' : 'Confirm Appointment'}
                     </button>
+                    {item.appointmentMode === 'telemedicine' && (
+                      <>
+                        <input
+                          type='url'
+                          placeholder='https://meet.google.com/...'
+                          value={linkDrafts[item._id] ?? item.consultationLink ?? ''}
+                          onChange={(event) => setLinkDrafts((current) => ({ ...current, [item._id]: event.target.value }))}
+                          className='rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-emerald-400'
+                        />
+                        <button
+                          type='button'
+                          onClick={() => saveConsultationLink(item._id)}
+                          disabled={activeAction === `${item._id}-link`}
+                          className='rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300'
+                        >
+                          {activeAction === `${item._id}-link` ? 'Saving Link...' : item.consultationLink ? 'Update Consultation Link' : 'Add Consultation Link'}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

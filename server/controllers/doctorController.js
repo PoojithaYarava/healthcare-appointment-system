@@ -215,10 +215,49 @@ const updateAppointmentStatus = async (req, res) => {
     }
 };
 
+const updateTelemedicineLink = async (req, res) => {
+    try {
+        const { appointmentId, consultationLink } = req.body;
+
+        if (!appointmentId || !consultationLink) {
+            return res.status(400).json({ success: false, message: "Appointment ID and consultation link are required" });
+        }
+
+        let parsedUrl;
+        try {
+            parsedUrl = new URL(consultationLink);
+        } catch {
+            return res.status(400).json({ success: false, message: "Please provide a valid meeting URL" });
+        }
+
+        if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+            return res.status(400).json({ success: false, message: "Meeting URL must start with http or https" });
+        }
+
+        const appointment = await appointmentModel.findOne({ _id: appointmentId, docId: req.doctorId });
+        if (!appointment) {
+            return res.status(404).json({ success: false, message: "Appointment not found" });
+        }
+
+        if (appointment.appointmentMode !== "telemedicine") {
+            return res.status(400).json({ success: false, message: "Consultation links can only be added to telemedicine appointments" });
+        }
+
+        appointment.consultationLink = consultationLink.trim();
+        await appointment.save();
+
+        return res.json({ success: true, message: "Consultation link saved successfully", appointment });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 export {
     registerDoctor,
     loginDoctor,
     getDoctorProfile,
     getDoctorAppointments,
-    updateAppointmentStatus
+    updateAppointmentStatus,
+    updateTelemedicineLink
 };

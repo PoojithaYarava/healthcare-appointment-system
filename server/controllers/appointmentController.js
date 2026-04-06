@@ -9,12 +9,18 @@ const bookAppointment = async (req, res) => {
 
     try {
         const userId = req.userId;
-        const { docId, slotDate, slotTime } = req.body;
+        const { docId, slotDate, slotTime, appointmentMode = "in-person" } = req.body;
 
         if (!userId || !docId || !slotDate || !slotTime) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({ success: false, message: "Missing booking details" });
+        }
+
+        if (!["in-person", "telemedicine"].includes(appointmentMode)) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, message: "Invalid appointment mode" });
         }
 
         const userData = await userModel.findById(userId).select("-password").session(session);
@@ -56,6 +62,7 @@ const bookAppointment = async (req, res) => {
             amount: docData.fees,
             slotTime,
             slotDate,
+            appointmentMode,
             date: Date.now(),
             doctorApproved: false
         };
@@ -115,4 +122,68 @@ const confirmAppointmentPayment = async (req, res) => {
     }
 };
 
-export { bookAppointment, getUserAppointments, confirmAppointmentPayment };
+const cancelAppointment = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const userId = req.userId;
+        const { appointmentId } = req.body;
+
+        if (!appointmentId) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, message: "Appointment ID is required" });
+        }
+
+        const appointment = await appointmentModel.findOne({ _id: appointmentId, userId }).session(session);
+
+        if (!appointment) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ success: false, message: "Appointment not found" });
+        }
+
+        if (appointment.cancelled) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.json({ success: true, message: "Appointment already cancelled", appointment });
+        }
+
+        if (appointment.isCompleted) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, message: "Completed appointments cannot be cancelled" });
+        }
+
+        const doctor = await doctorModel.findById(appointment.docId).session(session);
+        if (doctor) {
+            const slotsBooked = doctor.slots_booked || {};
+            const bookedTimes = slotsBooked[appointment.slotDate] || [];
+            slotsBooked[appointment.slotDate] = bookedTimes.filter((time) => time !== appointment.slotTime);
+
+            if (!slotsBooked[appointment.slotDate].length) {
+                delete slotsBooked[appointment.slotDate];
+            }
+
+            doctor.slots_booked = slotsBooked;
+            doctor.markModified("slots_booked");
+            await doctor.save({ session });
+        }
+
+        appointment.cancelled = true;
+        await appointment.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        res.json({ success: true, message: "Appointment cancelled successfully", appointment });
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export { bookAppointment, getUserAppointments, confirmAppointmentPayment, cancelAppointment };

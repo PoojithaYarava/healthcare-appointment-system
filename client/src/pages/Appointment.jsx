@@ -13,6 +13,7 @@ const Appointment = () => {
   const [docSlots, setDocSlots] = useState([])
   const [slotIndex, setSlotIndex] = useState(0)
   const [slotTime, setSlotTime] = useState('')
+  const [appointmentMode, setAppointmentMode] = useState('in-person')
   const [isBooking, setIsBooking] = useState(false)
 
   useEffect(() => {
@@ -105,7 +106,8 @@ const Appointment = () => {
         {
           docId,
           slotDate: selectedSlot.slotDate,
-          slotTime: selectedSlot.time
+          slotTime: selectedSlot.time,
+          appointmentMode
         },
         { headers: authHeaders() }
       )
@@ -164,6 +166,31 @@ const Appointment = () => {
       </div>
 
       <div className='mt-4 font-medium text-gray-700 sm:ml-72 sm:pl-4'>
+        <div className='mb-6'>
+          <p className='mb-3'>Consultation mode</p>
+          <div className='flex flex-col gap-3 sm:flex-row'>
+            <button
+              type='button'
+              onClick={() => setAppointmentMode('in-person')}
+              className={`rounded-2xl border px-5 py-3 text-left transition-colors ${appointmentMode === 'in-person' ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-200 bg-white text-gray-700 hover:border-indigo-300'}`}
+            >
+              In-person visit
+            </button>
+            <button
+              type='button'
+              onClick={() => setAppointmentMode('telemedicine')}
+              className={`rounded-2xl border px-5 py-3 text-left transition-colors ${appointmentMode === 'telemedicine' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300'}`}
+            >
+              Telemedicine
+            </button>
+          </div>
+          <p className='mt-2 text-sm text-gray-500'>
+            {appointmentMode === 'telemedicine'
+              ? 'Meet the doctor online. The doctor can share a consultation link after approval.'
+              : 'Visit the doctor at the hospital or clinic for this appointment.'}
+          </p>
+        </div>
+
         <p>Booking slots</p>
         <div className='mt-4 flex gap-3 overflow-x-auto pb-2'>
           {docSlots.map((daySlots, index) => (

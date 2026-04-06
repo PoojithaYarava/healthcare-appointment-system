@@ -5,7 +5,8 @@ import {
     loginDoctor,
     getDoctorProfile,
     getDoctorAppointments,
-    updateAppointmentStatus
+    updateAppointmentStatus,
+    updateTelemedicineLink
 } from '../controllers/doctorController.js';
 
 const doctorRouter = express.Router();
@@ -15,5 +16,6 @@ doctorRouter.post('/login', loginDoctor);
 doctorRouter.get('/get-profile', authDoctor, getDoctorProfile);
 doctorRouter.get('/appointments', authDoctor, getDoctorAppointments);
 doctorRouter.post('/appointments/update-status', authDoctor, updateAppointmentStatus);
+doctorRouter.post('/appointments/update-link', authDoctor, updateTelemedicineLink);
 
 export default doctorRouter;

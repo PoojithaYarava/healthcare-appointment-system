@@ -98,6 +98,10 @@ const Payments = () => {
             <span className="text-gray-500">Time</span>
             <span className="font-medium text-gray-800">{appointment.slotTime}</span>
           </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-500">Mode</span>
+            <span className="font-medium text-gray-800">{appointment.appointmentMode === 'telemedicine' ? 'Telemedicine' : 'In-person'}</span>
+          </div>
           <div className="flex justify-between gap-4 pt-2 border-t">
             <span className="text-gray-600">Consultation Fee</span>
             <span className="font-bold text-indigo-600">{currencySymbol}{appointment.amount}</span>
