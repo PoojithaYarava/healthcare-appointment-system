@@ -7,7 +7,7 @@ import { v2 as cloudinary } from "cloudinary";
 // Helper: Create a 7-day token with explicit 'id' key
 const createToken = (id) => {
     // Convert to string to ensure consistency in the JWT payload
-    return jwt.sign({ id: String(id) }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    return jwt.sign({ id: String(id), role: 'user' }, process.env.JWT_SECRET, { expiresIn: '7d' });
 }
 
 // API for User Registration

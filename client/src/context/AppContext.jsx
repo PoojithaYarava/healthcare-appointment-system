@@ -1,12 +1,16 @@
-import { createContext, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
+import { AppContext } from "./appContextInstance";
 
-export const AppContext = createContext(null);
+export { AppContext } from "./appContextInstance";
 
 const AppContextProvider = (props) => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
     const [token, setToken] = useState(() => localStorage.getItem("token") || "");
+    const [authRole, setAuthRole] = useState(() => localStorage.getItem("authRole") || (localStorage.getItem("token") ? "user" : ""));
     const [userData, setUserData] = useState(false);
+    const [doctorData, setDoctorData] = useState(false);
+    const [adminData, setAdminData] = useState(false);
     const [isProfileLoading, setIsProfileLoading] = useState(false);
     const [profileError, setProfileError] = useState("");
     const [doctors, setDoctors] = useState([]);
@@ -44,9 +48,11 @@ const AppContextProvider = (props) => {
         }
     }, [backendUrl]);
 
-    const loadUserProfileData = useCallback(async (userToken = token, signal) => {
-        if (!userToken) {
+    const loadAuthProfileData = useCallback(async (sessionToken = token, role = authRole, signal) => {
+        if (!sessionToken || !role) {
             setUserData(false);
+            setDoctorData(false);
+            setAdminData(false);
             setProfileError("");
             setIsProfileLoading(false);
             return null;
@@ -56,17 +62,41 @@ const AppContextProvider = (props) => {
             setIsProfileLoading(true);
             setProfileError("");
 
-            const { data } = await axios.get(`${backendUrl}/api/user/get-profile`, {
-                headers: authHeaders(userToken),
+            const endpoint = role === "doctor"
+                ? "/api/doctor/get-profile"
+                : role === "admin"
+                    ? "/api/admin/profile"
+                    : "/api/user/get-profile";
+
+            const { data } = await axios.get(`${backendUrl}${endpoint}`, {
+                headers: authHeaders(sessionToken),
                 signal
             });
 
             if (data.success) {
+                if (role === "admin") {
+                    setAdminData(data.admin);
+                    setUserData(false);
+                    setDoctorData(false);
+                    return data.admin;
+                }
+
+                if (role === "doctor") {
+                    setDoctorData(data.doctor);
+                    setUserData(false);
+                    setAdminData(false);
+                    return data.doctor;
+                }
+
                 setUserData(data.userData);
+                setDoctorData(false);
+                setAdminData(false);
                 return data.userData;
             }
 
             setUserData(false);
+            setDoctorData(false);
+            setAdminData(false);
             setProfileError(data.message || "Unable to load profile data.");
             return null;
         } catch (error) {
@@ -76,6 +106,8 @@ const AppContextProvider = (props) => {
 
             console.error("Profile Fetch Error:", error.message);
             setUserData(false);
+            setDoctorData(false);
+            setAdminData(false);
             setProfileError(error.response?.data?.message || "Unable to load profile data right now.");
             return null;
         } finally {
@@ -83,7 +115,7 @@ const AppContextProvider = (props) => {
                 setIsProfileLoading(false);
             }
         }
-    }, [authHeaders, backendUrl, token]);
+    }, [authHeaders, authRole, backendUrl, token]);
 
     useEffect(() => {
         loadDoctors();
@@ -93,16 +125,18 @@ const AppContextProvider = (props) => {
     useEffect(() => {
         const controller = new AbortController();
 
-        if (token) {
-            loadUserProfileData(token, controller.signal);
+        if (token && authRole) {
+            loadAuthProfileData(token, authRole, controller.signal);
         } else {
             setUserData(false);
+            setDoctorData(false);
+            setAdminData(false);
             setProfileError("");
             setIsProfileLoading(false);
         }
 
         return () => controller.abort();
-    }, [token, loadUserProfileData]);
+    }, [authRole, token, loadAuthProfileData]);
 
     useEffect(() => {
         if (token) {
@@ -112,16 +146,40 @@ const AppContextProvider = (props) => {
         }
     }, [token]);
 
+    useEffect(() => {
+        if (authRole) {
+            localStorage.setItem("authRole", authRole);
+        } else {
+            localStorage.removeItem("authRole");
+        }
+    }, [authRole]);
+
+    const clearSession = useCallback(() => {
+        setToken("");
+        setAuthRole("");
+        setUserData(false);
+        setDoctorData(false);
+        setAdminData(false);
+        setProfileError("");
+    }, []);
+
     const value = {
         token,
         setToken,
+        authRole,
+        setAuthRole,
         backendUrl,
         authHeaders,
         userData,
         setUserData,
+        doctorData,
+        setDoctorData,
+        adminData,
+        setAdminData,
         isProfileLoading,
         profileError,
-        loadUserProfileData,
+        loadAuthProfileData,
+        clearSession,
         doctors,
         hospitals,
         isDataLoading,
