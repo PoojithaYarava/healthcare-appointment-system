@@ -1,5 +1,6 @@
 import doctorModel from "../models/doctorModel.js";
 import hospitalModel from "../models/hospitalModel.js";
+import labTestModel from "../models/LabTestModel.js";
 
 const listDoctors = async (req, res) => {
     try {
@@ -52,4 +53,30 @@ const listHospitals = async (req, res) => {
     }
 };
 
-export { listDoctors, getDoctorById, listHospitals };
+const listLabTests = async (req, res) => {
+    try {
+        const labTests = await labTestModel.find({ active: true }).sort({ createdAt: -1 });
+        res.json({ success: true, labTests });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getLabTestById = async (req, res) => {
+    try {
+        const { testId } = req.params;
+        const labTest = await labTestModel.findOne({ _id: testId, active: true });
+
+        if (!labTest) {
+            return res.status(404).json({ success: false, message: "Lab test not found" });
+        }
+
+        res.json({ success: true, labTest });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export { listDoctors, getDoctorById, listHospitals, listLabTests, getLabTestById };

@@ -95,6 +95,14 @@ const Navbar = () => {
                                 </>
                             )}
                         </NavLink>
+                        <NavLink to='/lab-tests' className={navLinkClass}>
+                            {({ isActive }) => (
+                                <>
+                                    <li>LAB TESTS</li>
+                                    <span className={`absolute inset-x-0 -bottom-2 h-0.5 rounded-full bg-indigo-600 transition-opacity ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+                                </>
+                            )}
+                        </NavLink>
                         <NavLink to='/my-appointments' className={navLinkClass}>
                             {({ isActive }) => (
                                 <>
