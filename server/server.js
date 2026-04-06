@@ -15,6 +15,11 @@ import userRouter from './routes/userRoute.js'; // Ensure this file exists!
 // App Config
 const app = express();
 const port = process.env.PORT || 4000;
+const allowedOrigins = [
+    'http://localhost:5173',
+    process.env.FRONTEND_URL,
+    process.env.FRONTEND_URL_ALT
+].filter(Boolean);
 
 // Connect to Database and Cloudinary
 connectDB();
@@ -23,7 +28,14 @@ connectCloudinary();
 // Middlewares
 
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: (origin, callback) => {
+        // Allow server-to-server requests and configured frontend origins.
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
@@ -43,6 +55,6 @@ app.get('/', (req, res) => {
 });
 
 // Use template literals for a clickable link in the terminal
-app.listen(port, () => console.log(`Server started on http://localhost:4000`));
+app.listen(port, () => console.log(`Server started on port ${port}`));
 
 
