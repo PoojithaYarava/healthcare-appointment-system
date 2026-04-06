@@ -10,6 +10,7 @@ const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [labBookings, setLabBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeCancelId, setActiveCancelId] = useState('');
 
   const loadAppointments = useCallback(async () => {
     if (!token || authRole !== 'user') {
@@ -47,6 +48,30 @@ const MyAppointments = () => {
     loadAppointments();
   }, [loadAppointments]);
 
+  const cancelAppointment = async (appointmentId) => {
+    try {
+      setActiveCancelId(appointmentId);
+      const { data } = await axios.post(
+        `${backendUrl}/api/appointment/cancel`,
+        { appointmentId },
+        { headers: authHeaders() }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        setAppointments((current) => current.map((item) => (
+          item._id === appointmentId ? data.appointment : item
+        )));
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to cancel appointment');
+    } finally {
+      setActiveCancelId('');
+    }
+  };
+
   if (!token) {
     return <div className='py-16 text-center text-gray-500'>Please log in to view your appointments.</div>;
   }
@@ -62,41 +87,63 @@ const MyAppointments = () => {
   return (
     <div className='p-5'>
       <h1 className='text-2xl font-bold text-indigo-900 border-b pb-4'>My Bookings</h1>
-      <div className='mt-5'>
+      <div className='mt-5 space-y-4'>
         {!appointments.length && !labBookings.length && (
           <p className='text-gray-500'>You do not have any appointments or lab test bookings yet.</p>
         )}
 
         {appointments.map((item) => (
-          <div key={item._id} className='flex gap-6 border-b py-4 items-center'>
-            <img className='w-24 rounded-lg bg-indigo-50 object-cover' src={item.docData?.image} alt={item.docData?.name} />
+          <div key={item._id} className='flex flex-col gap-4 border-b py-4 sm:flex-row sm:items-center sm:gap-6'>
+            <img className='h-24 w-24 rounded-lg bg-indigo-50 object-cover' src={item.docData?.image} alt={item.docData?.name} />
             <div className='flex-1'>
               <p className='font-bold text-indigo-900'>{item.docData?.name}</p>
-              <p className='text-emerald-600 text-sm'>{item.docData?.speciality}</p>
-              <p className='text-xs text-gray-500 mt-2'>Date: {item.slotDate} | Time: {item.slotTime}</p>
-              <p className='text-xs text-gray-500 mt-1'>Amount: {currencySymbol}{item.amount}</p>
-              <p className='text-xs text-gray-500 mt-1'>
+              <p className='text-sm text-emerald-600'>{item.docData?.speciality}</p>
+              <p className='mt-1 text-xs font-medium uppercase tracking-[0.18em] text-slate-400'>{item.appointmentMode === 'telemedicine' ? 'Telemedicine' : 'In-person'}</p>
+              <p className='mt-2 text-xs text-gray-500'>Date: {item.slotDate} | Time: {item.slotTime}</p>
+              <p className='mt-1 text-xs text-gray-500'>Amount: {currencySymbol}{item.amount}</p>
+              <p className='mt-1 text-xs text-gray-500'>
                 Status: {item.cancelled ? 'Cancelled' : item.isCompleted ? 'Confirmed by doctor' : item.doctorApproved ? 'Approved by doctor' : 'Pending doctor approval'}
               </p>
+              {item.appointmentMode === 'telemedicine' && item.consultationLink && (
+                <a
+                  href={item.consultationLink}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='mt-3 inline-flex rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100'
+                >
+                  Join Consultation
+                </a>
+              )}
             </div>
-            <div className='flex flex-col gap-2 min-w-[170px]'>
+            <div className='flex w-full flex-col gap-2 sm:w-auto sm:min-w-[150px]'>
               {item.payment ? (
-                <button className='bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm' disabled>
+                <button className='rounded-lg bg-emerald-500 px-3 py-2 text-sm text-white sm:w-[150px]' disabled>
                   Payment Confirmed
                 </button>
               ) : (
                 <button
                   type='button'
                   onClick={() => navigate(`/payments/${item._id}`, { state: { appointment: item } })}
-                  className='bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors disabled:bg-indigo-300'
+                  className='rounded-lg bg-indigo-600 px-3 py-2 text-sm text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-300 sm:w-[150px]'
                 >
                   Pay Now
                 </button>
               )}
 
-              <button className='border border-gray-200 text-gray-500 px-4 py-2 rounded-lg text-sm' disabled>
+              <button className='rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-500 sm:w-[150px]' disabled>
                 {item.cancelled ? 'Cancelled' : item.isCompleted ? 'Completed' : item.doctorApproved ? 'Approved' : 'Awaiting Approval'}
               </button>
+
+              {!item.cancelled && !item.isCompleted && (
+                <button
+                  type='button'
+                  onClick={() => cancelAppointment(item._id)}
+                  disabled={activeCancelId === item._id}
+                  className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 sm:w-[150px]'
+                >
+                  {activeCancelId === item._id ? 'Cancelling...' : 'Cancel Appointment'}
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -106,20 +153,20 @@ const MyAppointments = () => {
             <h2 className='text-xl font-semibold text-rose-600'>Lab Tests with Home Sample Collection</h2>
             <div className='mt-4 space-y-4'>
               {labBookings.map((item) => (
-                <div key={item._id} className='flex gap-6 border-b py-4 items-start'>
-                  <div className='flex h-24 w-24 items-center justify-center rounded-2xl bg-rose-50 text-3xl'>🧪</div>
+                <div key={item._id} className='flex flex-col gap-4 border-b py-4 sm:flex-row sm:items-start sm:gap-6'>
+                  <div className='flex h-24 w-24 items-center justify-center rounded-2xl bg-rose-50 text-xl font-semibold text-rose-600'>LAB</div>
                   <div className='flex-1'>
                     <p className='font-bold text-slate-900'>{item.testData?.name}</p>
-                    <p className='text-rose-600 text-sm'>{item.testData?.category}</p>
-                    <p className='text-xs text-gray-500 mt-2'>Home sample date: {item.preferredDate} | Time: {item.preferredTime}</p>
-                    <p className='text-xs text-gray-500 mt-1'>Address: {item.address?.line1}{item.address?.line2 ? `, ${item.address.line2}` : ''}</p>
-                    <p className='text-xs text-gray-500 mt-1'>Patient: {item.patientName}{item.patientAge ? `, ${item.patientAge}` : ''}{item.gender ? `, ${item.gender}` : ''}</p>
-                    {item.landmark && <p className='text-xs text-gray-500 mt-1'>Landmark: {item.landmark}</p>}
-                    {item.collectionInstructions && <p className='text-xs text-gray-500 mt-1'>Collection notes: {item.collectionInstructions}</p>}
-                    <p className='text-xs text-gray-500 mt-1'>Amount: {currencySymbol}{item.amount}</p>
-                    <p className='text-xs text-gray-500 mt-1'>Status: {item.status}</p>
+                    <p className='text-sm text-rose-600'>{item.testData?.category}</p>
+                    <p className='mt-2 text-xs text-gray-500'>Home sample date: {item.preferredDate} | Time: {item.preferredTime}</p>
+                    <p className='mt-1 text-xs text-gray-500'>Address: {item.address?.line1}{item.address?.line2 ? `, ${item.address.line2}` : ''}</p>
+                    <p className='mt-1 text-xs text-gray-500'>Patient: {item.patientName}{item.patientAge ? `, ${item.patientAge}` : ''}{item.gender ? `, ${item.gender}` : ''}</p>
+                    {item.landmark && <p className='mt-1 text-xs text-gray-500'>Landmark: {item.landmark}</p>}
+                    {item.collectionInstructions && <p className='mt-1 text-xs text-gray-500'>Collection notes: {item.collectionInstructions}</p>}
+                    <p className='mt-1 text-xs text-gray-500'>Amount: {currencySymbol}{item.amount}</p>
+                    <p className='mt-1 text-xs text-gray-500'>Status: {item.status}</p>
                   </div>
-                  <div className='min-w-[170px]'>
+                  <div className='w-full sm:min-w-[170px]'>
                     <button className='w-full border border-rose-200 bg-rose-50 px-4 py-2 rounded-lg text-sm text-rose-700' disabled>
                       {item.status === 'requested' ? 'Pickup Requested' : item.status}
                     </button>

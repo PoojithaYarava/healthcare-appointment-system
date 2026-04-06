@@ -61,7 +61,7 @@ const MyProfile = () => {
             </div>
 
             {isEdit
-                ? <input className='bg-gray-50 text-3xl font-medium max-w-60 mt-4' type="text" value={userData.name} onChange={e => setUserData(prev => ({ ...prev, name: e.target.value }))} />
+                ? <input className='bg-gray-50 text-3xl font-medium max-w-full mt-4 sm:max-w-60' type="text" value={userData.name} onChange={e => setUserData(prev => ({ ...prev, name: e.target.value }))} />
                 : <p className='font-medium text-3xl text-neutral-800 mt-4'>{userData.name}</p>
             }
 
@@ -69,12 +69,12 @@ const MyProfile = () => {
 
             <div>
                 <p className='text-neutral-500 underline mt-3'>CONTACT INFORMATION</p>
-                <div className='grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-neutral-700'>
+                <div className='grid grid-cols-1 gap-y-2.5 mt-3 text-neutral-700 sm:grid-cols-[1fr_3fr]'>
                     <p className='font-medium'>Email:</p>
-                    <p className='text-blue-500'>{userData.email}</p>
+                    <p className='break-all text-blue-500'>{userData.email}</p>
                     <p className='font-medium'>Phone:</p>
                     {isEdit
-                        ? <input className='bg-gray-100 max-w-52' type="text" value={userData.phone} onChange={e => setUserData(prev => ({ ...prev, phone: e.target.value }))} />
+                        ? <input className='bg-gray-100 max-w-full sm:max-w-52' type="text" value={userData.phone} onChange={e => setUserData(prev => ({ ...prev, phone: e.target.value }))} />
                         : <p className='text-blue-400'>{userData.phone}</p>
                     }
                 </div>

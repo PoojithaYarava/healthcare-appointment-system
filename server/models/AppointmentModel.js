@@ -5,6 +5,8 @@ const appointmentSchema = new mongoose.Schema({
     docId: { type: String, required: true },
     slotDate: { type: String, required: true },
     slotTime: { type: String, required: true },
+    appointmentMode: { type: String, enum: ['in-person', 'telemedicine'], default: 'in-person' },
+    consultationLink: { type: String, default: '' },
     userData: { type: Object, required: true },
     docData: { type: Object, required: true },
     amount: { type: Number, required: true },
