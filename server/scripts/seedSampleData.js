@@ -94,6 +94,9 @@ const seed = async () => {
             ...doctor,
             hospitalId: hospitalMap.get(doctor.hospitalName) || null,
             password: await bcrypt.hash(doctor.password, 10),
+            isApproved: true,
+            registrationStatus: 'approved',
+            registrationSource: 'admin',
             date: Date.now()
         })));
 

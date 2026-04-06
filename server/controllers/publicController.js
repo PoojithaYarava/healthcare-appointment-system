@@ -4,7 +4,13 @@ import hospitalModel from "../models/hospitalModel.js";
 const listDoctors = async (req, res) => {
     try {
         const doctors = await doctorModel
-            .find({ available: true })
+            .find({
+                available: true,
+                $or: [
+                    { isApproved: true },
+                    { isApproved: { $exists: false } }
+                ]
+            })
             .select("-password -slots_booked")
             .populate("hospitalId", "name location image verified")
             .sort({ createdAt: -1, date: -1 });
@@ -25,7 +31,7 @@ const getDoctorById = async (req, res) => {
             .select("-password")
             .populate("hospitalId", "name location image verified");
 
-        if (!doctor) {
+        if (!doctor || doctor.isApproved === false) {
             return res.status(404).json({ success: false, message: "Doctor not found" });
         }
 

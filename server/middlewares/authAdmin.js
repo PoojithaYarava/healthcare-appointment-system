@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-const authUser = async (req, res, next) => {
+const authAdmin = async (req, res, next) => {
     try {
         const headerToken = req.headers.token;
         const authHeader = req.headers.authorization;
@@ -10,7 +10,7 @@ const authUser = async (req, res, next) => {
         const token = String(headerToken || bearerToken || '').trim();
 
         if (!token) {
-            return res.status(401).json({ success: false, message: "Not Authorized" });
+            return res.status(401).json({ success: false, message: "Admin not authorized" });
         }
 
         if (!process.env.JWT_SECRET) {
@@ -19,17 +19,16 @@ const authUser = async (req, res, next) => {
 
         const tokenDecode = jwt.verify(token, process.env.JWT_SECRET);
 
-        if (tokenDecode.role && tokenDecode.role !== 'user') {
-            return res.status(403).json({ success: false, message: "User access required" });
+        if (tokenDecode.role !== 'admin') {
+            return res.status(403).json({ success: false, message: "Admin access required" });
         }
 
-        req.userId = tokenDecode.id;
+        req.adminEmail = tokenDecode.email;
         next();
-
     } catch (error) {
-        console.error("JWT Verification Failed:", error.message);
+        console.error("Admin JWT Verification Failed:", error.message);
         return res.status(401).json({ success: false, message: error.message });
     }
 };
 
-export default authUser;
+export default authAdmin;

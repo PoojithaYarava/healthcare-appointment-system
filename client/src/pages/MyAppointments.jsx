@@ -2,16 +2,16 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import { AppContext } from '../context/AppContext';
+import { AppContext } from '../context/appContextInstance';
 
 const MyAppointments = () => {
   const navigate = useNavigate();
-  const { backendUrl, authHeaders, currencySymbol, token } = useContext(AppContext);
+  const { backendUrl, authHeaders, currencySymbol, token, authRole } = useContext(AppContext);
   const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadAppointments = useCallback(async () => {
-    if (!token) {
+    if (!token || authRole !== 'user') {
       setAppointments([]);
       return;
     }
@@ -32,7 +32,7 @@ const MyAppointments = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [authHeaders, backendUrl, token]);
+  }, [authHeaders, authRole, backendUrl, token]);
 
   useEffect(() => {
     loadAppointments();
@@ -40,6 +40,10 @@ const MyAppointments = () => {
 
   if (!token) {
     return <div className='py-16 text-center text-gray-500'>Please log in to view your appointments.</div>;
+  }
+
+  if (authRole === 'doctor') {
+    return <div className='py-16 text-center text-gray-500'>Doctor accounts can review requests from the doctor dashboard.</div>;
   }
 
   if (isLoading) {
@@ -62,6 +66,9 @@ const MyAppointments = () => {
               <p className='text-emerald-600 text-sm'>{item.docData?.speciality}</p>
               <p className='text-xs text-gray-500 mt-2'>Date: {item.slotDate} | Time: {item.slotTime}</p>
               <p className='text-xs text-gray-500 mt-1'>Amount: {currencySymbol}{item.amount}</p>
+              <p className='text-xs text-gray-500 mt-1'>
+                Status: {item.cancelled ? 'Cancelled' : item.isCompleted ? 'Confirmed by doctor' : item.doctorApproved ? 'Approved by doctor' : 'Pending doctor approval'}
+              </p>
             </div>
             <div className='flex flex-col gap-2 min-w-[170px]'>
               {item.payment ? (
@@ -79,7 +86,7 @@ const MyAppointments = () => {
               )}
 
               <button className='border border-gray-200 text-gray-500 px-4 py-2 rounded-lg text-sm' disabled>
-                {item.cancelled ? 'Cancelled' : item.isCompleted ? 'Completed' : 'Scheduled'}
+                {item.cancelled ? 'Cancelled' : item.isCompleted ? 'Completed' : item.doctorApproved ? 'Approved' : 'Awaiting Approval'}
               </button>
             </div>
           </div>

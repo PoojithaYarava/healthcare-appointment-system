@@ -2,13 +2,13 @@ import React, { useContext, useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { AppContext } from '../context/AppContext'
+import { AppContext } from '../context/appContextInstance'
 import { assets } from '../assets/assets'
 
 const Appointment = () => {
   const { docId } = useParams()
   const navigate = useNavigate()
-  const { backendUrl, authHeaders, currencySymbol, token } = useContext(AppContext)
+  const { backendUrl, authHeaders, currencySymbol, token, authRole } = useContext(AppContext)
   const [docInfo, setDocInfo] = useState(null)
   const [docSlots, setDocSlots] = useState([])
   const [slotIndex, setSlotIndex] = useState(0)
@@ -83,6 +83,12 @@ const Appointment = () => {
     if (!token) {
       toast.info('Please log in to book an appointment')
       navigate('/login')
+      return
+    }
+
+    if (authRole === 'doctor') {
+      toast.info('Doctor accounts can manage bookings from the doctor dashboard')
+      navigate('/doctor/appointments')
       return
     }
 

@@ -33,14 +33,15 @@ const addDoctor = async (req, res) => {
     try {
         const { name, email, password, speciality, degree, experience, about, fees, address, hospitalId } = req.body;
         const imageFile = req.file;
+        const normalizedEmail = email?.trim().toLowerCase();
 
         // Checking for all data to add doctor
-        if (!name || !email || !password || !speciality || !degree || !experience || !about || !fees || !address) {
+        if (!name || !normalizedEmail || !password || !speciality || !degree || !experience || !about || !fees || !address) {
             return res.json({ success: false, message: "Missing Details" });
         }
 
         // Validating email format
-        if (!validator.isEmail(email)) {
+        if (!validator.isEmail(normalizedEmail)) {
             return res.json({ success: false, message: "Please enter a valid email" });
         }
 
@@ -59,8 +60,11 @@ const addDoctor = async (req, res) => {
 
         const doctorData = {
             name,
-            email,
+            email: normalizedEmail,
             password: hashedPassword,
+            isApproved: true,
+            registrationStatus: 'approved',
+            registrationSource: 'admin',
             hospitalId: hospitalId || null,
             speciality,
             degree,
@@ -83,4 +87,78 @@ const addDoctor = async (req, res) => {
     }
 };
 
-export { addDoctor, addHospital };
+const listPendingDoctors = async (req, res) => {
+    try {
+        const doctors = await doctorModel
+            .find({ registrationStatus: 'pending' })
+            .select('-password -slots_booked')
+            .populate('hospitalId', 'name location image verified')
+            .sort({ date: -1 });
+
+        res.json({ success: true, doctors });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const listDoctors = async (req, res) => {
+    try {
+        const doctors = await doctorModel
+            .find({})
+            .select('-password -slots_booked')
+            .populate('hospitalId', 'name location image verified')
+            .sort({ date: -1 });
+
+        res.json({ success: true, doctors });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const listHospitals = async (req, res) => {
+    try {
+        const hospitals = await hospitalModel.find({}).sort({ createdAt: -1 });
+        res.json({ success: true, hospitals });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const updateDoctorApprovalStatus = async (req, res) => {
+    try {
+        const { doctorId, action } = req.body;
+
+        if (!doctorId || !action) {
+            return res.status(400).json({ success: false, message: "Doctor ID and action are required" });
+        }
+
+        const doctor = await doctorModel.findById(doctorId);
+        if (!doctor) {
+            return res.status(404).json({ success: false, message: "Doctor not found" });
+        }
+
+        if (action === 'approve') {
+            doctor.isApproved = true;
+            doctor.registrationStatus = 'approved';
+            await doctor.save();
+            return res.json({ success: true, message: "Doctor approved successfully", doctor });
+        }
+
+        if (action === 'reject') {
+            doctor.isApproved = false;
+            doctor.registrationStatus = 'rejected';
+            await doctor.save();
+            return res.json({ success: true, message: "Doctor rejected successfully", doctor });
+        }
+
+        return res.status(400).json({ success: false, message: "Unsupported action" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export { addDoctor, addHospital, listPendingDoctors, listDoctors, listHospitals, updateDoctorApprovalStatus };

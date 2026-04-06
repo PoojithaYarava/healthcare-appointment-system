@@ -1,15 +1,14 @@
 import React from 'react'
 import { assets } from '../assets/assets'
 
-const Footer = () => {
+const Footer = ({ compact = false }) => {
   return (
-    <div className='md:mx-10 border-t border-gray-200 mt-20'>
-      <div className='flex flex-col sm:grid grid-cols-[3fr_1fr_1fr] gap-14 my-10 text-sm text-gray-600'>
-        
+    <div className={`md:mx-10 border-t border-gray-200 ${compact ? 'mt-10' : 'mt-20'}`}>
+      <div className={`flex flex-col sm:grid grid-cols-[3fr_1fr_1fr] gap-14 text-sm text-gray-600 ${compact ? 'my-8' : 'my-10'}`}>
         <div>
           <img className='mb-5 w-40' src={assets.logo} alt="" />
           <p className='w-full md:w-2/3 leading-6'>
-            MediConnect is your trusted partner in digital healthcare. Book 
+            MediConnect is your trusted partner in digital healthcare. Book
             appointments with top specialists instantly and manage your health.
           </p>
         </div>
@@ -31,7 +30,6 @@ const Footer = () => {
             <li>support@mediconnect.com</li>
           </ul>
         </div>
-
       </div>
       <hr />
       <p className='py-5 text-sm text-center text-gray-500'>
