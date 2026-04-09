@@ -8,6 +8,10 @@ Frontend: https://healthcare-appointment-system-beta.vercel.app
 
 Backend API: https://healthcare-backend-18e1.onrender.com
 
+Admin Login: https://healthcare-appointment-system-beta.vercel.app/admin/login
+
+Note: Admin access is shared only for demo/review purposes with temporary credentials. It is not intended as open public access or permanent full administrative use.
+
 ## Features
 
 - User registration and login
